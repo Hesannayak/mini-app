@@ -12,7 +12,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { useVoiceStore } from '@/store/voiceStore';
-import { useUserStore } from '@/store/userStore';
+import { useUserStore, Language } from '@/store/userStore';
 import { VOICE_EXAMPLES } from '@/constants/intents';
 import { API, apiFetch } from '@/lib/api';
 
@@ -56,7 +56,7 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
 
 export default function VoiceScreen() {
   const { status, transcript, responseText, setStatus, setTranscript, setResponse, reset } = useVoiceStore();
-  const { language } = useUserStore();
+  const { language, setLanguage } = useUserStore();
   const insets = useSafeAreaInsets();
 
   const examples = VOICE_EXAMPLES[language] || VOICE_EXAMPLES.hi;
@@ -413,7 +413,23 @@ export default function VoiceScreen() {
 
       <View style={s.header}>
         <Text style={s.headerTitle}>Voice</Text>
-        <TouchableOpacity style={s.langPill}>
+        <TouchableOpacity
+          style={s.langPill}
+          onPress={() => {
+            const order: Language[] = ['hi', 'en', 'ta', 'te'];
+            const next = order[(order.indexOf(language) + 1) % order.length];
+            if (Platform.OS === 'web' && webRecRef.current) {
+              userStoppedRef.current = true;
+              isCapturingRef.current = false;
+              webRecRef.current.abort();
+              webRecRef.current = null;
+            }
+            setLanguage(next);
+            reset();
+            setConvHistory([]);
+          }}
+        >
+          <Feather name="globe" size={12} color="#A0A0C0" style={{ marginRight: 4 }} />
           <Text style={s.langText}>
             {language === 'hi' ? 'हिंदी' : language === 'ta' ? 'தமிழ்' : language === 'te' ? 'తెలుగు' : 'English'}
           </Text>
@@ -585,7 +601,8 @@ const s = StyleSheet.create({
   headerTitle: { color: '#EEF2FF', fontSize: 28, fontWeight: '700', fontFamily: 'Inter_700Bold', letterSpacing: -0.5 },
   langPill: {
     backgroundColor: '#14142A', borderRadius: 20, borderWidth: 1, borderColor: '#1E2040',
-    paddingHorizontal: 14, paddingVertical: 7,
+    paddingHorizontal: 12, paddingVertical: 7,
+    flexDirection: 'row', alignItems: 'center',
   },
   langText: { color: '#8B8BAD', fontSize: 13, fontFamily: 'Inter_500Medium' },
   body: { flex: 1, flexDirection: 'column' },
