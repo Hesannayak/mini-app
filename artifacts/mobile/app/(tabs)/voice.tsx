@@ -71,6 +71,7 @@ export default function VoiceScreen() {
   const [recordSecs, setRecordSecs] = useState(0);
   const [convHistory, setConvHistory] = useState<Array<{ user: string; ai: string }>>([]);
   const [autoRestarting, setAutoRestarting] = useState(false);
+  const [showConfirmButtons, setShowConfirmButtons] = useState(false);
   const autoRestartRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingContextRef = useRef<{ intent: string; entities: Record<string, any> } | null>(null);
   const autoStartFnRef = useRef<() => void>(() => {});
@@ -161,16 +162,21 @@ export default function VoiceScreen() {
           setStatus('responding');
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-          // Auto-restart mic so user can confirm/reply without tapping again
           if (data.action === 'confirm') {
             pendingContextRef.current = { intent: data.intent, entities: data.entities };
-            setAutoRestarting(true);
-            autoRestartRef.current = setTimeout(() => {
-              setAutoRestarting(false);
-              autoStartFnRef.current();
-            }, 1800);
+            // Show YES/NO buttons — more reliable than auto-restarting mic
+            setShowConfirmButtons(true);
+            // On native, also auto-restart mic as fallback after a delay
+            if (Platform.OS !== 'web') {
+              setAutoRestarting(true);
+              autoRestartRef.current = setTimeout(() => {
+                setAutoRestarting(false);
+                autoStartFnRef.current();
+              }, 2000);
+            }
           } else {
             pendingContextRef.current = null;
+            setShowConfirmButtons(false);
           }
           return;
         }
@@ -338,7 +344,7 @@ export default function VoiceScreen() {
     rec?.stopAndUnloadAsync().catch(() => {});
     Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
     setShowFallback(false); setFallbackText(''); setInterimText(''); setRecordSecs(0);
-    setAutoRestarting(false); setConvHistory([]);
+    setAutoRestarting(false); setShowConfirmButtons(false); setConvHistory([]);
     pendingContextRef.current = null;
     reset();
   };
@@ -404,7 +410,37 @@ export default function VoiceScreen() {
             </View>
           )}
 
-          {/* Auto-restart indicator */}
+          {/* Confirm YES/NO buttons — shown after action=confirm */}
+          {showConfirmButtons && (
+            <View style={s.confirmRow}>
+              <TouchableOpacity
+                style={s.confirmYes}
+                onPress={() => {
+                  if (autoRestartRef.current) { clearTimeout(autoRestartRef.current); autoRestartRef.current = null; }
+                  setAutoRestarting(false);
+                  setShowConfirmButtons(false);
+                  processTranscript('हाँ');
+                }}
+              >
+                <Feather name="check" size={16} color="#080812" />
+                <Text style={s.confirmYesText}>हाँ, करो</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.confirmNo}
+                onPress={() => {
+                  if (autoRestartRef.current) { clearTimeout(autoRestartRef.current); autoRestartRef.current = null; }
+                  setAutoRestarting(false);
+                  setShowConfirmButtons(false);
+                  processTranscript('नहीं');
+                }}
+              >
+                <Feather name="x" size={16} color="#EF4444" />
+                <Text style={s.confirmNoText}>नहीं</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Auto-restart indicator (native only) */}
           {autoRestarting && (
             <View style={s.autoRestartBadge}>
               <Feather name="mic" size={12} color="#10B981" />
@@ -618,4 +654,20 @@ const s = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 10,
   },
   chipText: { color: '#6870A0', fontSize: 13, fontFamily: 'Inter_400Regular' },
+  confirmRow: {
+    flexDirection: 'row', gap: 12, alignSelf: 'flex-start', marginTop: 4,
+  },
+  confirmYes: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#10B981', borderRadius: 24,
+    paddingHorizontal: 20, paddingVertical: 12,
+    shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 6,
+  },
+  confirmYesText: { color: '#080812', fontSize: 15, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+  confirmNo: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#1A0A0A', borderRadius: 24, borderWidth: 1, borderColor: '#3B1515',
+    paddingHorizontal: 20, paddingVertical: 12,
+  },
+  confirmNoText: { color: '#EF4444', fontSize: 15, fontWeight: '600', fontFamily: 'Inter_500Medium' },
 });
