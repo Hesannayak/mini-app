@@ -21,13 +21,51 @@ export default function ChatPage() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [listening, setListening] = useState(false);
   const [pin, setPin] = useState<{ amount: number; payee: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
   const name = getUserName();
 
   useEffect(() => { if (!isLoggedIn()) router.replace('/login'); }, [router]);
 
   const scroll = () => setTimeout(() => scrollRef.current?.scrollTo({ top: 999999, behavior: 'smooth' }), 100);
+
+  // ── Voice recording via Web Speech API ──
+  const startListening = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { alert('Browser does not support voice input'); return; }
+    const rec = new SR();
+    rec.lang = 'hi-IN';
+    rec.continuous = false;
+    rec.interimResults = true;
+    recognitionRef.current = rec;
+
+    rec.onresult = (e: any) => {
+      let interim = '', final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      if (interim) setInput(interim);
+      if (final) { setInput(''); send(final); }
+    };
+    rec.onerror = () => { setListening(false); };
+    rec.onend = () => { setListening(false); };
+    rec.start();
+    setListening(true);
+  };
+
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setListening(false);
+  };
+
+  const toggleVoice = () => {
+    if (listening) stopListening();
+    else startListening();
+  };
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -153,6 +191,24 @@ export default function ChatPage() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send(input)}
           />
+          {/* Mic button */}
+          <button onClick={toggleVoice}
+            style={{
+              width: 38, height: 38, borderRadius: 19, border: 'none', cursor: 'pointer',
+              backgroundColor: listening ? C.green : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s',
+              animation: listening ? 'pulse 1.5s ease-in-out infinite' : 'none',
+            }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={listening ? '#FFF' : C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+              <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+
+          {/* Send button */}
           <button onClick={() => send(input)} disabled={!input.trim()}
             style={{
               width: 38, height: 38, borderRadius: 19, border: 'none', cursor: input.trim() ? 'pointer' : 'default',

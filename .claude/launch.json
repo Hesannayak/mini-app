@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "auth-service",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "watch", "services/auth/src/server.ts"],
+      "port": 3000
+    },
+    {
+      "name": "payments-service",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "watch", "services/payments/src/server.ts"],
+      "port": 3001
+    },
+    {
+      "name": "voice-service",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3002", "--reload", "--app-dir", "services/voice"],
+      "port": 3002
+    },
+    {
+      "name": "intelligence-service",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3003", "--reload", "--app-dir", "services/intelligence"],
+      "port": 3003
+    },
+    {
+      "name": "coach-service",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3004", "--reload", "--app-dir", "services/coach"],
+      "port": 3004
+    },
+    {
+      "name": "web-app",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd apps/web && npx next dev --port 3006"],
+      "port": 3006
+    }
+  ]
+}
