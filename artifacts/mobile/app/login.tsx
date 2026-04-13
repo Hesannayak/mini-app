@@ -10,10 +10,7 @@ import * as Haptics from 'expo-haptics';
 import MiniLogo from '@/components/MiniLogo';
 import { useAuthStore } from '@/store/authStore';
 import { useUserStore } from '@/store/userStore';
-
-const AUTH_BASE = Platform.OS === 'web'
-  ? 'http://localhost:3000/api/v1/auth'
-  : 'https://api.mini.app/api/v1/auth';
+import { API } from '@/lib/api';
 
 type Step = 'phone' | 'otp' | 'name';
 
@@ -41,7 +38,7 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${AUTH_BASE}/otp/send`, {
+      const res = await fetch(`${API.auth()}/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone }),
@@ -70,7 +67,7 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${AUTH_BASE}/otp/verify`, {
+      const res = await fetch(`${API.auth()}/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, otp: otpString }),

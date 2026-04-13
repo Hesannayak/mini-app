@@ -10,9 +10,7 @@ import MiniLogo from '@/components/MiniLogo';
 import PinInput from '@/components/PinInput';
 import { useUserStore } from '@/store/userStore';
 import { checkPaymentAuth } from '@/utils/paymentRules';
-
-const COACH_BASE = 'https://api.mini.app/api/v1/coach';
-const VOICE_BASE = 'https://api.mini.app/api/v1/voice';
+import { API } from '@/lib/api';
 
 const MOCK_RESPONSES: Record<string, string> = {
   balance: 'Aapke account mein ₹42,350 hain. Savings account mein ₹18,600 aur current mein ₹23,750.',
@@ -99,7 +97,7 @@ export default function HomeScreen() {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
 
     try {
-      const voiceRes = await fetch(`${VOICE_BASE}/text`, {
+      const voiceRes = await fetch(`${API.voice()}/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: msg, language: 'hi' }),
