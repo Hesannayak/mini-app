@@ -39,6 +39,11 @@ packages:
   - lib/*
   - lib/integrations/*
   - scripts
+  - services/auth
+  - services/payments
+  - services/notifications
+  - packages/shared-types
+  - packages/database
 
 catalog:
   '@replit/vite-plugin-cartographer': ^0.5.1
@@ -69,8 +74,11 @@ autoInstallPeers: false
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - '@prisma/client'
+  - '@prisma/engines'
   - esbuild
   - msw
+  - prisma
   - unrs-resolver
 
 overrides:

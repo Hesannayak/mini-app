@@ -1,0 +1,100 @@
+{
+  "common": {
+    "app_name": "Mini",
+    "loading": "रुकिए...",
+    "error": "कुछ गलत हो गया, दोबारा कोशिश करें",
+    "retry": "दोबारा कोशिश करें",
+    "cancel": "रद्द करें",
+    "confirm": "पक्का करें",
+    "done": "हो गया",
+    "save": "सहेजें",
+    "delete": "हटाएं",
+    "back": "वापस",
+    "next": "आगे",
+    "yes": "हां",
+    "no": "नहीं",
+    "ok": "ठीक है",
+    "search": "खोजें",
+    "no_internet": "इंटरनेट नहीं है। बाद में कोशिश करें।"
+  },
+  "auth": {
+    "enter_phone": "अपना फ़ोन नंबर डालें",
+    "send_otp": "OTP भेजें",
+    "enter_otp": "OTP डालें",
+    "verify": "पुष्टि करें",
+    "otp_sent": "OTP भेज दिया गया है",
+    "invalid_otp": "गलत OTP, दोबारा कोशिश करें",
+    "resend_otp": "OTP दोबारा भेजें"
+  },
+  "home": {
+    "greeting_morning": "सुप्रभात",
+    "greeting_afternoon": "नमस्ते",
+    "greeting_evening": "शुभ संध्या",
+    "balance": "बैलेंस",
+    "today_spent": "आज खर्च",
+    "mini_score": "Mini Score",
+    "quick_actions": "जल्दी करें",
+    "recent_transactions": "हाल की लेनदेन"
+  },
+  "voice": {
+    "listening": "सुन रहा हूं...",
+    "processing": "समझ रहा हूं...",
+    "not_understood": "मुझे समझ नहीं आया, दोबारा बोलिए",
+    "tap_to_speak": "बोलने के लिए दबाएं",
+    "try_saying": "ऐसे बोलें:"
+  },
+  "payments": {
+    "send_money": "पैसे भेजें",
+    "request_money": "पैसे मांगें",
+    "check_balance": "बैलेंस देखें",
+    "confirm_payment": "पैसे भेजने की पुष्टि करें",
+    "sending_to": "को भेज रहे हैं",
+    "amount": "राशि",
+    "payment_success": "पैसे भेज दिए गए!",
+    "payment_failed": "पैसे नहीं भेज पाए, दोबारा कोशिश करें",
+    "biometric_required": "₹1,000 से ज़्यादा के लिए फिंगरप्रिंट ज़रूरी है"
+  },
+  "spending": {
+    "title": "खर्च",
+    "today": "आज",
+    "this_week": "इस हफ्ते",
+    "this_month": "इस महीने",
+    "daily_summary": "आज का हिसाब",
+    "category_food": "खाना",
+    "category_transport": "यातायात",
+    "category_groceries": "किराना",
+    "category_bills": "बिल",
+    "category_emi": "EMI",
+    "category_entertainment": "मनोरंजन",
+    "category_shopping": "शॉपिंग",
+    "category_health": "स्वास्थ्य",
+    "category_education": "शिक्षा",
+    "category_family": "परिवार",
+    "category_other": "अन्य"
+  },
+  "bills": {
+    "title": "बिल",
+    "upcoming": "आने वाले बिल",
+    "overdue": "बकाया बिल",
+    "pay_bill": "बिल भरें",
+    "bill_paid": "बिल भर दिया गया!",
+    "due_in_days": "{{days}} दिन बाकी",
+    "reminder_set": "याद दिलाना सेट हो गया"
+  },
+  "score": {
+    "title": "Mini Score",
+    "your_score": "आपका Score",
+    "bill_discipline": "बिल अनुशासन",
+    "spending_control": "खर्च नियंत्रण",
+    "savings_rate": "बचत दर",
+    "income_stability": "आय स्थिरता",
+    "improvement_tips": "Score बढ़ाने के तरीके",
+    "score_improved": "Score {{delta}} अंक बढ़ा!"
+  },
+  "coach": {
+    "title": "AI Coach",
+    "placeholder": "कुछ भी पूछें...",
+    "thinking": "सोच रहा हूं...",
+    "expert_redirect": "इसके लिए एक financial advisor से बात करो — मैं सिर्फ़ आपकी spending patterns में help कर सकता हूं"
+  }
+}

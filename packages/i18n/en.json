@@ -1,0 +1,100 @@
+{
+  "common": {
+    "app_name": "Mini",
+    "loading": "Loading...",
+    "error": "Something went wrong, please try again",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "done": "Done",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "search": "Search",
+    "no_internet": "No internet connection. Try again later."
+  },
+  "auth": {
+    "enter_phone": "Enter your phone number",
+    "send_otp": "Send OTP",
+    "enter_otp": "Enter OTP",
+    "verify": "Verify",
+    "otp_sent": "OTP has been sent",
+    "invalid_otp": "Invalid OTP, please try again",
+    "resend_otp": "Resend OTP"
+  },
+  "home": {
+    "greeting_morning": "Good morning",
+    "greeting_afternoon": "Hello",
+    "greeting_evening": "Good evening",
+    "balance": "Balance",
+    "today_spent": "Spent today",
+    "mini_score": "Mini Score",
+    "quick_actions": "Quick Actions",
+    "recent_transactions": "Recent Transactions"
+  },
+  "voice": {
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "not_understood": "I didn't understand, please try again",
+    "tap_to_speak": "Tap to speak",
+    "try_saying": "Try saying:"
+  },
+  "payments": {
+    "send_money": "Send Money",
+    "request_money": "Request Money",
+    "check_balance": "Check Balance",
+    "confirm_payment": "Confirm Payment",
+    "sending_to": "Sending to",
+    "amount": "Amount",
+    "payment_success": "Payment sent successfully!",
+    "payment_failed": "Payment failed, please try again",
+    "biometric_required": "Fingerprint required for amounts over ₹1,000"
+  },
+  "spending": {
+    "title": "Spending",
+    "today": "Today",
+    "this_week": "This Week",
+    "this_month": "This Month",
+    "daily_summary": "Daily Summary",
+    "category_food": "Food",
+    "category_transport": "Transport",
+    "category_groceries": "Groceries",
+    "category_bills": "Bills",
+    "category_emi": "EMI",
+    "category_entertainment": "Entertainment",
+    "category_shopping": "Shopping",
+    "category_health": "Health",
+    "category_education": "Education",
+    "category_family": "Family",
+    "category_other": "Other"
+  },
+  "bills": {
+    "title": "Bills",
+    "upcoming": "Upcoming Bills",
+    "overdue": "Overdue Bills",
+    "pay_bill": "Pay Bill",
+    "bill_paid": "Bill paid successfully!",
+    "due_in_days": "{{days}} days left",
+    "reminder_set": "Reminder set"
+  },
+  "score": {
+    "title": "Mini Score",
+    "your_score": "Your Score",
+    "bill_discipline": "Bill Discipline",
+    "spending_control": "Spending Control",
+    "savings_rate": "Savings Rate",
+    "income_stability": "Income Stability",
+    "improvement_tips": "Tips to Improve",
+    "score_improved": "Score improved by {{delta}} points!"
+  },
+  "coach": {
+    "title": "AI Coach",
+    "placeholder": "Ask anything...",
+    "thinking": "Thinking...",
+    "expert_redirect": "For this, please consult a financial advisor — I can only help with your spending patterns"
+  }
+}

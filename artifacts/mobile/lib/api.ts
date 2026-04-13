@@ -18,7 +18,11 @@ function serviceUrl(port: number, path: string): string {
 
 export const API = {
   auth:         () => serviceUrl(3000, '/api/v1/auth'),
+  payments:     () => serviceUrl(3001, '/api/v1/payments'),
   voice:        () => serviceUrl(3002, '/api/v1/voice'),
   intelligence: () => serviceUrl(3003, '/api/v1/intelligence'),
   coach:        () => serviceUrl(3004, '/api/v1/coach'),
+  score:        () => serviceUrl(3003, '/api/v1/score'),
+  budgets:      () => serviceUrl(3003, '/api/v1/budgets'),
+  transactions: () => serviceUrl(3003, '/api/v1/transactions'),
 };

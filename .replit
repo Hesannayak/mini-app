@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "python-3.11"]
 
 [deployment]
 router = "application"
@@ -11,6 +11,90 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "services/voice: Voice Service"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "services/auth: Auth Service"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "services/intelligence: Intelligence Service"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "services/payments: Payments Service"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "services/coach: Coach Service"
+
+[[workflows.workflow]]
+name = "services/voice: Voice Service"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd services/voice && python3.11 -m uvicorn main:app --host 0.0.0.0 --port 3002 --reload"
+waitForPort = 3002
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "services/auth: Auth Service"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @mini/auth-service run dev"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "services/intelligence: Intelligence Service"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd services/intelligence && python3.11 -m uvicorn main:app --host 0.0.0.0 --port 3003 --reload"
+waitForPort = 3003
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "services/payments: Payments Service"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @mini/payments-service run dev"
+waitForPort = 3001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "services/coach: Coach Service"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd services/coach && python3.11 -m uvicorn main:app --host 0.0.0.0 --port 3004 --reload"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -18,6 +102,14 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
+localPort = 3003
+externalPort = 3003
 
 [[ports]]
 localPort = 8080

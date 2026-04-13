@@ -1,0 +1,100 @@
+{
+  "common": {
+    "app_name": "Mini",
+    "loading": "వేచి ఉండండి...",
+    "error": "ఏదో తప్పు జరిగింది, మళ్ళీ ప్రయత్నించండి",
+    "retry": "మళ్ళీ ప్రయత్నించు",
+    "cancel": "రద్దు",
+    "confirm": "నిర్ధారించు",
+    "done": "అయిపోయింది",
+    "save": "సేవ్ చేయి",
+    "delete": "తొలగించు",
+    "back": "వెనుకకు",
+    "next": "తదుపరి",
+    "yes": "అవును",
+    "no": "కాదు",
+    "ok": "సరే",
+    "search": "వెతుకు",
+    "no_internet": "ఇంటర్నెట్ కనెక్షన్ లేదు. తర్వాత ప్రయత్నించండి."
+  },
+  "auth": {
+    "enter_phone": "మీ ఫోన్ నంబర్ నమోదు చేయండి",
+    "send_otp": "OTP పంపు",
+    "enter_otp": "OTP నమోదు చేయండి",
+    "verify": "ధృవీకరించు",
+    "otp_sent": "OTP పంపబడింది",
+    "invalid_otp": "తప్పు OTP, మళ్ళీ ప్రయత్నించండి",
+    "resend_otp": "OTP మళ్ళీ పంపు"
+  },
+  "home": {
+    "greeting_morning": "శుభోదయం",
+    "greeting_afternoon": "నమస్కారం",
+    "greeting_evening": "శుభ సాయంత్రం",
+    "balance": "బ్యాలెన్స్",
+    "today_spent": "ఈరోజు ఖర్చు",
+    "mini_score": "Mini Score",
+    "quick_actions": "త్వరిత చర్యలు",
+    "recent_transactions": "ఇటీవలి లావాదేవీలు"
+  },
+  "voice": {
+    "listening": "వింటున్నాను...",
+    "processing": "అర్థం చేసుకుంటున్నాను...",
+    "not_understood": "అర్థం కాలేదు, మళ్ళీ చెప్పండి",
+    "tap_to_speak": "మాట్లాడటానికి నొక్కండి",
+    "try_saying": "ఇలా చెప్పండి:"
+  },
+  "payments": {
+    "send_money": "డబ్బు పంపు",
+    "request_money": "డబ్బు అడుగు",
+    "check_balance": "బ్యాలెన్స్ చూడు",
+    "confirm_payment": "చెల్లింపు నిర్ధారించండి",
+    "sending_to": "పంపుతున్న వ్యక్తి",
+    "amount": "మొత్తం",
+    "payment_success": "డబ్బు పంపబడింది!",
+    "payment_failed": "డబ్బు పంపలేకపోయాం, మళ్ళీ ప్రయత్నించండి",
+    "biometric_required": "₹1,000 కంటే ఎక్కువకు వేలిముద్ర అవసరం"
+  },
+  "spending": {
+    "title": "ఖర్చు",
+    "today": "ఈరోజు",
+    "this_week": "ఈ వారం",
+    "this_month": "ఈ నెల",
+    "daily_summary": "ఈరోజు లెక్క",
+    "category_food": "ఆహారం",
+    "category_transport": "రవాణా",
+    "category_groceries": "కిరాణా",
+    "category_bills": "బిల్లులు",
+    "category_emi": "EMI",
+    "category_entertainment": "వినోదం",
+    "category_shopping": "షాపింగ్",
+    "category_health": "ఆరోగ్యం",
+    "category_education": "విద్య",
+    "category_family": "కుటుంబం",
+    "category_other": "ఇతరాలు"
+  },
+  "bills": {
+    "title": "బిల్లులు",
+    "upcoming": "రాబోయే బిల్లులు",
+    "overdue": "ఆలస్యమైన బిల్లులు",
+    "pay_bill": "బిల్లు చెల్లించు",
+    "bill_paid": "బిల్లు చెల్లించబడింది!",
+    "due_in_days": "{{days}} రోజులు మిగిలి ఉన్నాయి",
+    "reminder_set": "రిమైండర్ సెట్ చేయబడింది"
+  },
+  "score": {
+    "title": "Mini Score",
+    "your_score": "మీ Score",
+    "bill_discipline": "బిల్లు క్రమశిక్షణ",
+    "spending_control": "ఖర్చు నియంత్రణ",
+    "savings_rate": "పొదుపు రేటు",
+    "income_stability": "ఆదాయ స్థిరత్వం",
+    "improvement_tips": "Score పెంచే మార్గాలు",
+    "score_improved": "Score {{delta}} పాయింట్లు పెరిగింది!"
+  },
+  "coach": {
+    "title": "AI Coach",
+    "placeholder": "ఏదైనా అడగండి...",
+    "thinking": "ఆలోచిస్తున్నాను...",
+    "expert_redirect": "దీని కోసం financial advisor ని సంప్రదించండి — నేను మీ ఖర్చు విధానాలలో మాత్రమే సహాయం చేయగలను"
+  }
+}

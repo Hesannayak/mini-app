@@ -1,0 +1,100 @@
+{
+  "common": {
+    "app_name": "Mini",
+    "loading": "காத்திருங்கள்...",
+    "error": "ஏதோ தவறு ஏற்பட்டது, மீண்டும் முயற்சிக்கவும்",
+    "retry": "மீண்டும் முயற்சி",
+    "cancel": "ரத்து",
+    "confirm": "உறுதிப்படுத்து",
+    "done": "முடிந்தது",
+    "save": "சேமி",
+    "delete": "நீக்கு",
+    "back": "பின்",
+    "next": "அடுத்து",
+    "yes": "ஆம்",
+    "no": "இல்லை",
+    "ok": "சரி",
+    "search": "தேடு",
+    "no_internet": "இணைய இணைப்பு இல்லை. பின்னர் முயற்சிக்கவும்."
+  },
+  "auth": {
+    "enter_phone": "உங்கள் தொலைபேசி எண்ணை உள்ளிடவும்",
+    "send_otp": "OTP அனுப்பு",
+    "enter_otp": "OTP உள்ளிடவும்",
+    "verify": "சரிபார்",
+    "otp_sent": "OTP அனுப்பப்பட்டது",
+    "invalid_otp": "தவறான OTP, மீண்டும் முயற்சிக்கவும்",
+    "resend_otp": "OTP மீண்டும் அனுப்பு"
+  },
+  "home": {
+    "greeting_morning": "காலை வணக்கம்",
+    "greeting_afternoon": "வணக்கம்",
+    "greeting_evening": "மாலை வணக்கம்",
+    "balance": "இருப்பு",
+    "today_spent": "இன்று செலவு",
+    "mini_score": "Mini Score",
+    "quick_actions": "விரைவு செயல்கள்",
+    "recent_transactions": "சமீபத்திய பரிவர்த்தனைகள்"
+  },
+  "voice": {
+    "listening": "கேட்கிறேன்...",
+    "processing": "புரிந்துகொள்கிறேன்...",
+    "not_understood": "புரியவில்லை, மீண்டும் சொல்லுங்கள்",
+    "tap_to_speak": "பேச தட்டவும்",
+    "try_saying": "இப்படி சொல்லுங்கள்:"
+  },
+  "payments": {
+    "send_money": "பணம் அனுப்பு",
+    "request_money": "பணம் கேள்",
+    "check_balance": "இருப்பு பார்",
+    "confirm_payment": "பணம் அனுப்புவதை உறுதிப்படுத்தவும்",
+    "sending_to": "அனுப்பும் நபர்",
+    "amount": "தொகை",
+    "payment_success": "பணம் அனுப்பப்பட்டது!",
+    "payment_failed": "பணம் அனுப்ப முடியவில்லை, மீண்டும் முயற்சிக்கவும்",
+    "biometric_required": "₹1,000க்கு மேல் கைரேகை அவசியம்"
+  },
+  "spending": {
+    "title": "செலவு",
+    "today": "இன்று",
+    "this_week": "இந்த வாரம்",
+    "this_month": "இந்த மாதம்",
+    "daily_summary": "இன்றைய கணக்கு",
+    "category_food": "உணவு",
+    "category_transport": "போக்குவரத்து",
+    "category_groceries": "மளிகை",
+    "category_bills": "பில்கள்",
+    "category_emi": "EMI",
+    "category_entertainment": "பொழுதுபோக்கு",
+    "category_shopping": "ஷாப்பிங்",
+    "category_health": "உடல்நலம்",
+    "category_education": "கல்வி",
+    "category_family": "குடும்பம்",
+    "category_other": "மற்றவை"
+  },
+  "bills": {
+    "title": "பில்கள்",
+    "upcoming": "வரவிருக்கும் பில்கள்",
+    "overdue": "தாமதமான பில்கள்",
+    "pay_bill": "பில் செலுத்து",
+    "bill_paid": "பில் செலுத்தப்பட்டது!",
+    "due_in_days": "{{days}} நாட்கள் உள்ளன",
+    "reminder_set": "நினைவூட்டல் அமைக்கப்பட்டது"
+  },
+  "score": {
+    "title": "Mini Score",
+    "your_score": "உங்கள் Score",
+    "bill_discipline": "பில் ஒழுங்கு",
+    "spending_control": "செலவு கட்டுப்பாடு",
+    "savings_rate": "சேமிப்பு விகிதம்",
+    "income_stability": "வருமான நிலைத்தன்மை",
+    "improvement_tips": "Score அதிகரிக்க வழிகள்",
+    "score_improved": "Score {{delta}} புள்ளிகள் அதிகரித்தது!"
+  },
+  "coach": {
+    "title": "AI Coach",
+    "placeholder": "எதையும் கேளுங்கள்...",
+    "thinking": "யோசிக்கிறேன்...",
+    "expert_redirect": "இதற்கு ஒரு financial advisor-ஐ அணுகுங்கள் — நான் உங்கள் செலவு முறைகளில் மட்டுமே உதவ முடியும்"
+  }
+}

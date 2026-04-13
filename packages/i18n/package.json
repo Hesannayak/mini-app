@@ -1,0 +1,9 @@
+{
+  "name": "@mini/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "lint": "echo 'JSON lint check' && node -e \"['hi','ta','te','en'].forEach(l => JSON.parse(require('fs').readFileSync(l+'.json','utf8')))\""
+  }
+}
