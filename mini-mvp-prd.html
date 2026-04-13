@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini — Production MVP PRD</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafaf8;
+  --ink: #111110;
+  --surface: #ffffff;
+  --surface2: #f4f3f0;
+  --border: #e8e6e1;
+  --border2: #d4d1ca;
+  --muted: #78766f;
+  --accent: #16a34a;
+  --accent-soft: rgba(22,163,74,0.08);
+  --accent2: #0f172a;
+  --orange: #ea580c;
+  --orange-soft: rgba(234,88,12,0.08);
+  --blue: #2563eb;
+  --blue-soft: rgba(37,99,235,0.07);
+  --purple: #7c3aed;
+  --red: #dc2626;
+  --gold: #d97706;
+  --sidebar-w: 260px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Geist', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.7;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--accent2);
+  color: white;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.brand-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 28px;
+  font-style: italic;
+  color: white;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.brand-sub {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.sidebar-nav { padding: 16px 12px; flex: 1; }
+
+.nav-group { margin-bottom: 24px; }
+
+.nav-group-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  padding: 0 12px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  margin-bottom: 2px;
+}
+
+.nav-item:hover, .nav-item.active {
+  background: rgba(255,255,255,0.08);
+  color: white;
+}
+
+.nav-item.active { color: #86efac; }
+
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.version-badge {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.08em;
+}
+
+/* ── MAIN ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 72px 72px 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: 'PRD';
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  font-family: 'Instrument Serif', serif;
+  font-size: 240px;
+  font-style: italic;
+  color: rgba(0,0,0,0.025);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(22,163,74,0.2);
+  padding: 5px 12px;
+  border-radius: 100px;
+  margin-bottom: 28px;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 2s infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.hero h1 {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(48px, 7vw, 88px);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-desc {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 580px;
+  font-weight: 300;
+  margin-bottom: 40px;
+  line-height: 1.7;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 700px;
+}
+
+.meta-item {
+  flex: 1;
+  padding: 16px 20px;
+  border-right: 1px solid var(--border);
+}
+.meta-item:last-child { border-right: none; }
+
+.meta-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.meta-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ── SECTIONS ── */
+.section {
+  padding: 72px 72px 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section:last-child { border-bottom: none; }
+
+.s-num {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s-num::after {
+  content: '';
+  height: 1px;
+  width: 32px;
+  background: var(--accent);
+  opacity: 0.3;
+}
+
+.s-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.s-title em { font-style: italic; color: var(--orange); }
+.s-title .green { color: var(--accent); }
+.s-title .blue { color: var(--blue); }
+.s-title .purple { color: var(--purple); }
+
+.s-sub {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 620px;
+  margin-bottom: 48px;
+  font-weight: 300;
+}
+
+/* ── CARDS ── */
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card:hover {
+  border-color: var(--border2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.card-accent-green { border-left: 3px solid var(--accent); }
+.card-accent-orange { border-left: 3px solid var(--orange); }
+.card-accent-blue { border-left: 3px solid var(--blue); }
+.card-accent-purple { border-left: 3px solid var(--purple); }
+.card-accent-red { border-left: 3px solid var(--red); }
+.card-accent-gold { border-left: 3px solid var(--gold); }
+
+.card-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.card p { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+
+.big-num {
+  font-family: 'Instrument Serif', serif;
+  font-size: 44px;
+  color: var(--accent);
+  line-height: 1;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ── FEATURE SPEC ── */
+.feature-spec {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.feature-spec-head {
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+}
+
+.feature-spec-head h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feature-spec-body { padding: 24px; }
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 0;
+}
+
+.spec-row {
+  display: contents;
+}
+
+.spec-row > div {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+
+.spec-row:last-child > div { border-bottom: none; }
+
+.spec-row > div:first-child {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  background: var(--surface2);
+  font-weight: 500;
+}
+
+.spec-row > div:last-child { color: var(--ink); }
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background: var(--accent2);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0;
+  font-family: 'Geist Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.code-header {
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.code-header span {
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.code-dots { display: flex; gap: 6px; }
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: block;
+}
+.d1 { background: #ff5f57; }
+.d2 { background: #ffbd2e; }
+.d3 { background: #28c840; }
+
+.code-body { padding: 20px; color: #e2e8f0; overflow-x: auto; }
+
+.kw { color: #93c5fd; }
+.str { color: #86efac; }
+.cm { color: #64748b; font-style: italic; }
+.fn { color: #fbbf24; }
+.type { color: #f9a8d4; }
+.num { color: #fb923c; }
+.key { color: #c4b5fd; }
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.data-table th {
+  background: var(--surface2);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  vertical-align: top;
+}
+.data-table tr:hover td { background: rgba(0,0,0,0.02); }
+.data-table td.mono {
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+.badge-green { background: var(--accent-soft); color: var(--accent); }
+.badge-orange { background: var(--orange-soft); color: var(--orange); }
+.badge-blue { background: var(--blue-soft); color: var(--blue); }
+.badge-red { background: rgba(220,38,38,0.08); color: var(--red); }
+.badge-gold { background: rgba(217,119,6,0.08); color: var(--gold); }
+.badge-purple { background: rgba(124,58,237,0.08); color: var(--purple); }
+
+/* ── SCREEN MOCKUP ── */
+.screens-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 32px 0;
+}
+
+.screen-mock {
+  background: var(--accent2);
+  border-radius: 24px;
+  padding: 16px;
+  position: relative;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.screen-notch {
+  width: 80px; height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  margin: 0 auto 16px;
+}
+
+.screen-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.screen-content { flex: 1; }
+
+/* Home Screen */
+.home-greeting {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+.home-balance {
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  margin-bottom: 20px;
+}
+
+.home-balance small {
+  font-size: 14px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 300;
+}
+
+.balance-change {
+  font-size: 12px;
+  color: #86efac;
+  margin-bottom: 20px;
+  font-family: 'Geist Mono', monospace;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.qa-item {
+  background: rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 9px;
+  color: rgba(255,255,255,0.6);
+}
+
+.qa-item .qa-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+.mini-card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+}
+
+.mini-card .amount { color: white; font-weight: 600; font-family: 'Geist Mono', monospace; }
+.mini-card .amount.debit { color: #fca5a5; }
+.mini-card .amount.credit { color: #86efac; }
+
+/* Voice Screen */
+.voice-circle {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin: 20px auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  position: relative;
+}
+
+.voice-circle::before, .voice-circle::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(22,163,74,0.3);
+  animation: ripple 2s infinite;
+}
+.voice-circle::before { width:130px; height:130px; animation-delay:0s; }
+.voice-circle::after { width:160px; height:160px; animation-delay:0.5s; }
+
+@keyframes ripple {
+  0% { opacity:1; transform:scale(0.8); }
+  100% { opacity:0; transform:scale(1.2); }
+}
+
+.voice-text {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 16px;
+}
+
+.voice-transcript {
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+/* Score Screen */
+.score-num {
+  font-family: 'Instrument Serif', serif;
+  font-size: 72px;
+  color: var(--accent);
+  text-align: center;
+  line-height: 1;
+  margin: 12px 0 4px;
+}
+
+.score-label {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  font-family: 'Geist Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.score-bar-row {
+  margin-bottom: 10px;
+}
+
+.score-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4px;
+}
+
+.score-bar-track {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ── CALLOUT ── */
+.callout {
+  background: var(--accent-soft);
+  border: 1px solid rgba(22,163,74,0.15);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 20px 24px;
+  margin: 28px 0;
+}
+
+.callout h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.callout p { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+
+.callout-orange {
+  background: var(--orange-soft);
+  border-color: rgba(234,88,12,0.15);
+  border-left-color: var(--orange);
+}
+
+.callout-blue {
+  background: var(--blue-soft);
+  border-color: rgba(37,99,235,0.12);
+  border-left-color: var(--blue);
+}
+
+/* ── USER STORY ── */
+.story-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.story-id {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface2);
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.story-text { font-size: 14px; color: var(--ink); }
+.story-text strong { color: var(--accent); }
+
+.story-priority {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+}
+
+/* ── ARCH LAYERS ── */
+.arch-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+.arch-row:last-child { border-bottom: none; }
+
+.arch-layer-name {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-top: 4px;
+}
+
+.tech-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tech-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.tech-pill .tp-sub {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 1px;
+}
+
+/* ── TIMELINE ── */
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 8px; bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+
+.tl-item {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: 6px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.tl-week {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.tl-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.tl-tasks { list-style: none; }
+.tl-tasks li {
+  font-size: 13.5px;
+  color: var(--muted);
+  padding: 3px 0 3px 14px;
+  position: relative;
+}
+.tl-tasks li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 11px;
+  top: 5px;
+}
+
+/* ── FLOW ── */
+.api-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.api-step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.api-step:last-child { border-bottom: none; }
+
+.api-step-num {
+  width: 36px; height: 36px;
+  background: var(--accent2);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.api-step h4 { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.api-step p { font-size: 13px; color: var(--muted); }
+
+/* ── RESPONSIVE ── */
+@media(max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .hero, .section { padding: 48px 28px; }
+  .screens-row { grid-template-columns: repeat(2, 1fr); }
+  .spec-grid { grid-template-columns: 1fr; }
+}
+
+/* ── PRINT / CLEAN SECTIONS ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+  margin: 40px 0;
+}
+
+.highlight-row {
+  background: var(--accent2);
+  color: white;
+  padding: 40px 72px;
+  margin: 0 -72px;
+}
+
+.highlight-row h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 28px;
+  font-style: italic;
+  margin-bottom: 10px;
+  color: #86efac;
+}
+
+.highlight-row p { font-size: 15px; color: rgba(255,255,255,0.65); max-width: 640px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-name">Mini</span>
+    <span class="brand-sub">MVP PRD v1.0</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <a class="nav-item active" href="#overview"><span class="nav-dot"></span>Executive Summary</a>
+      <a class="nav-item" href="#goals"><span class="nav-dot"></span>Goals & Success Metrics</a>
+      <a class="nav-item" href="#users"><span class="nav-dot"></span>Target Users</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Features</div>
+      <a class="nav-item" href="#f1"><span class="nav-dot"></span>Voice UPI Payments</a>
+      <a class="nav-item" href="#f2"><span class="nav-dot"></span>Spending Intelligence</a>
+      <a class="nav-item" href="#f3"><span class="nav-dot"></span>Bill Manager</a>
+      <a class="nav-item" href="#f4"><span class="nav-dot"></span>Savings Coach</a>
+      <a class="nav-item" href="#f5"><span class="nav-dot"></span>Mini Score™</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Design</div>
+      <a class="nav-item" href="#screens"><span class="nav-dot"></span>Screen Flows</a>
+      <a class="nav-item" href="#design-system"><span class="nav-dot"></span>Design System</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Engineering</div>
+      <a class="nav-item" href="#schema"><span class="nav-dot"></span>Database Schema</a>
+      <a class="nav-item" href="#apis"><span class="nav-dot"></span>API Design</a>
+      <a class="nav-item" href="#backend"><span class="nav-dot"></span>Backend Architecture</a>
+      <a class="nav-item" href="#stack"><span class="nav-dot"></span>Tech Stack</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Launch</div>
+      <a class="nav-item" href="#roadmap"><span class="nav-dot"></span>Build Roadmap</a>
+      <a class="nav-item" href="#team"><span class="nav-dot"></span>Team Structure</a>
+      <a class="nav-item" href="#risks"><span class="nav-dot"></span>Risk Register</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="version-badge">CONFIDENTIAL · APRIL 2026</div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- HERO -->
+<section class="hero" id="overview">
+  <div class="hero-badge">Production MVP PRD</div>
+  <h1>Mini — <em>Your Money,<br>Your Language</em></h1>
+  <p class="hero-desc">Complete product requirements document for the MVP launch of Mini — India's first voice-first AI financial companion. Everything an engineering team needs to ship.</p>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <div class="meta-label">Product</div>
+      <div class="meta-val">Mini (iOS + Android)</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Phase</div>
+      <div class="meta-val">MVP v1.0</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Target Launch</div>
+      <div class="meta-val">6 Months</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Team Size</div>
+      <div class="meta-val">10–12 People</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Budget</div>
+      <div class="meta-val">₹3–4 Crore</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: GOALS ═══ -->
+<section class="section" id="goals">
+  <div class="s-num">01</div>
+  <h2 class="s-title">Goals &amp; <em>Success Metrics</em></h2>
+  <p class="s-sub">What winning looks like at 30, 60, and 90 days post-launch. Every feature decision is measured against these numbers.</p>
+
+  <div class="grid g3" style="margin-bottom:32px">
+    <div class="card card-accent-green">
+      <div class="card-label">North Star Metric</div>
+      <span class="big-num">3×</span>
+      <h3>Daily Active Usage</h3>
+      <p>Users open or speak to Mini at least 3 times per day. This is the habit loop that makes everything else work.</p>
+    </div>
+    <div class="card card-accent-orange">
+      <div class="card-label">30-Day Target</div>
+      <span class="big-num">D30 &gt;45%</span>
+      <h3>Retention Rate</h3>
+      <p>45% of users who install Mini are still active 30 days later. Industry average for fintech is 25%. We beat it.</p>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="card-label">Beta Target</div>
+      <span class="big-num">50K</span>
+      <h3>Beta Users in 90 Days</h3>
+      <p>Invite-only beta in Bengaluru, Jaipur, and Coimbatore. Quality over quantity. NPS target &gt;60.</p>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Month 1</th>
+        <th>Month 3</th>
+        <th>Month 6</th>
+        <th>Owner</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>DAU</strong></td><td class="mono">2,000</td><td class="mono">15,000</td><td class="mono">80,000</td><td><span class="badge badge-blue">Growth</span></td></tr>
+      <tr><td><strong>D7 Retention</strong></td><td class="mono">&gt;60%</td><td class="mono">&gt;65%</td><td class="mono">&gt;70%</td><td><span class="badge badge-orange">Product</span></td></tr>
+      <tr><td><strong>D30 Retention</strong></td><td class="mono">&gt;35%</td><td class="mono">&gt;45%</td><td class="mono">&gt;50%</td><td><span class="badge badge-orange">Product</span></td></tr>
+      <tr><td><strong>Voice commands/user/day</strong></td><td class="mono">&gt;2</td><td class="mono">&gt;3</td><td class="mono">&gt;4</td><td><span class="badge badge-green">NLP</span></td></tr>
+      <tr><td><strong>Voice accuracy (Hindi)</strong></td><td class="mono">&gt;88%</td><td class="mono">&gt;92%</td><td class="mono">&gt;95%</td><td><span class="badge badge-green">NLP</span></td></tr>
+      <tr><td><strong>UPI success rate</strong></td><td class="mono">&gt;97%</td><td class="mono">&gt;98%</td><td class="mono">&gt;99%</td><td><span class="badge badge-red">Payments</span></td></tr>
+      <tr><td><strong>Voice → action latency</strong></td><td class="mono">&lt;4s</td><td class="mono">&lt;3s</td><td class="mono">&lt;2.5s</td><td><span class="badge badge-green">Eng</span></td></tr>
+      <tr><td><strong>App crash rate</strong></td><td class="mono">&lt;1%</td><td class="mono">&lt;0.5%</td><td class="mono">&lt;0.1%</td><td><span class="badge badge-red">Mobile</span></td></tr>
+      <tr><td><strong>NPS</strong></td><td class="mono">&gt;50</td><td class="mono">&gt;60</td><td class="mono">&gt;65</td><td><span class="badge badge-orange">Product</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ SECTION: USERS ═══ -->
+<section class="section" id="users">
+  <div class="s-num">02</div>
+  <h2 class="s-title">Target <span class="green">Users</span></h2>
+  <p class="s-sub">Three primary personas. Every design decision, copy choice, and feature priority is made for these three people.</p>
+
+  <div class="grid g3">
+    <div class="card card-accent-green">
+      <div class="card-label">Persona A · Primary</div>
+      <h3>🧑‍💻 Rahul, 24 — Junior Engineer, Pune</h3>
+      <p>₹35,000/month salary. Sends money home to parents. Uses 4 different apps for payments. Comfortable with smartphones but frustrated by fragmentation. Speaks Hindi at home, English at work. Has GPay, PhonePe, and his bank app installed.</p>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+        <strong style="color:var(--ink)">Pain:</strong> "Mujhe nahi pata paise kahan jaate hain"<br>
+        <strong style="color:var(--ink)">Want:</strong> One app that just handles everything
+      </div>
+    </div>
+    <div class="card card-accent-orange">
+      <div class="card-label">Persona B · Secondary</div>
+      <h3>👩‍🍳 Sunita, 38 — Homemaker, Jaipur</h3>
+      <p>Manages household budget of ₹25,000/month. Pays electricity, school fees, grocery bills. Limited English. Uses WhatsApp constantly. Has a smartphone but finds banking apps confusing. First-time fintech user.</p>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+        <strong style="color:var(--ink)">Pain:</strong> "Bank ka app samajh nahi aata"<br>
+        <strong style="color:var(--ink)">Want:</strong> Voice-first, Hindi-native, forgiving UX
+      </div>
+    </div>
+    <div class="card card-accent-blue">
+      <div class="card-label">Persona C · Growth</div>
+      <h3>🏪 Manoj, 32 — Kirana Owner, Coimbatore</h3>
+      <p>Daily UPI collections of ₹8,000–15,000. Tracks everything in a physical ledger. Wants to know daily profit but finds digital tools complex. Speaks Tamil and some Hindi. Two kids in school. Aspirational — wants to save.</p>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+        <strong style="color:var(--ink)">Pain:</strong> "Roz ka hisaab likhna padta hai"<br>
+        <strong style="color:var(--ink)">Want:</strong> Digital khata that speaks Tamil
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: FEATURE 1 ═══ -->
+<section class="section" id="f1">
+  <div class="s-num">03</div>
+  <h2 class="s-title">Feature 1 —<br><em>Voice UPI Payments</em></h2>
+  <p class="s-sub">The core habit loop. Say it — Mini does it — confirms back. Works in Hindi, Tamil, Telugu from Day 1.</p>
+
+  <div class="feature-spec">
+    <div class="feature-spec-head">
+      <h3>🎤 F1 — Voice UPI Payments <span class="badge badge-red" style="margin-left:8px">P0 · Must Ship</span></h3>
+    </div>
+    <div class="feature-spec-body">
+      <div class="spec-grid">
+        <div class="spec-row"><div>User Story</div><div>As a user, I want to send money to someone by speaking naturally in Hindi/Tamil, so that I don't need to type UPI IDs or navigate menus.</div></div>
+        <div class="spec-row"><div>Acceptance Criteria</div><div>1. User speaks command → Mini transcribes in &lt;500ms<br>2. Intent extracted with &gt;92% accuracy for top 20 commands<br>3. Confirmation shown before any payment<br>4. Payment executes via Razorpay SDK<br>5. Voice confirmation plays on success<br>6. Transaction logged to spending history</div></div>
+        <div class="spec-row"><div>Languages (MVP)</div><div>Hindi, Tamil, Telugu. English fallback always available.</div></div>
+        <div class="spec-row"><div>Supported Commands</div><div>"Maa ko 500 bhej do" · "Check balance" · "Seedha UPI se bhej" · "Kitna bacha hai?" · "Last 5 transactions dikhao" · "Request money from Rahul"</div></div>
+        <div class="spec-row"><div>Payment Rail</div><div>Razorpay UPI SDK (P2P via NPCI — zero MDR). Razorpay PA license for merchant payments Phase 2.</div></div>
+        <div class="spec-row"><div>Safety Rules</div><div>Always confirm before executing. New contacts → mandatory confirm. Amount &gt;₹2,000 → biometric confirm. Night hours (12am–5am) → always confirm. Max ₹10,000/transaction MVP.</div></div>
+        <div class="spec-row"><div>Offline Behavior</div><div>Voice captured and queued. "Internet aane pe bhejega Mini" — notifies user. Draft stored locally.</div></div>
+        <div class="spec-row"><div>Error Handling</div><div>Insufficient balance → voice alert in Hindi. Bank downtime → "Bank server busy hai, 2 minute mein try karo". Failed payment → never double-charge. Full refund within 1 minute.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Stories -->
+  <div class="story-block">
+    <div class="story-id">US-001</div>
+    <div class="story-text">As <strong>Rahul</strong>, I say "Paisa bhej do Maa ko, 500 rupay" and Mini identifies Maa from my contacts, shows a confirm screen, and sends ₹500 with one tap.</div>
+    <div class="story-priority"><span class="badge badge-red">P0</span></div>
+  </div>
+  <div class="story-block">
+    <div class="story-id">US-002</div>
+    <div class="story-text">As <strong>Sunita</strong>, I say "Light ka bill bharna hai" and Mini shows my electricity bill amount and pays it via BBPS with voice confirmation.</div>
+    <div class="story-priority"><span class="badge badge-red">P0</span></div>
+  </div>
+  <div class="story-block">
+    <div class="story-id">US-003</div>
+    <div class="story-text">As any user, I ask "Kitna bacha hai account mein?" and Mini responds in 2 seconds: "Aapke account mein ₹12,340 hain" — in my language.</div>
+    <div class="story-priority"><span class="badge badge-red">P0</span></div>
+  </div>
+  <div class="story-block">
+    <div class="story-id">US-004</div>
+    <div class="story-text">As <strong>Manoj</strong>, I say "Aaj kitna aaya" (Tamil: "Innaiku evvalavu vandhathu") and Mini reads my incoming UPI transactions from today.</div>
+    <div class="story-priority"><span class="badge badge-orange">P1</span></div>
+  </div>
+
+  <div class="callout">
+    <h4>Voice NLP Implementation Note</h4>
+    <p>Use Sarvam AI's Saaras ASR model for Indian language speech-to-text — built specifically for Indian accents and background noise. Significantly outperforms Whisper on Hinglish and regional languages. Fine-tune on financial vocabulary (UPI, paisa, rupay, bhej, account). Entity extraction via custom NER model trained on 50,000 Indian financial utterances.</p>
+  </div>
+</section>
+
+<!-- ═══ SECTION: FEATURE 2 ═══ -->
+<section class="section" id="f2">
+  <div class="s-num">04</div>
+  <h2 class="s-title">Feature 2 —<br><span class="green">Daily Spending Intelligence</span></h2>
+  <p class="s-sub">Every transaction categorized, every pattern surfaced. Delivered as a conversational daily summary — not a dashboard.</p>
+
+  <div class="feature-spec">
+    <div class="feature-spec-head">
+      <h3>📊 F2 — Daily Spending Intelligence <span class="badge badge-red" style="margin-left:8px">P0 · Must Ship</span></h3>
+    </div>
+    <div class="feature-spec-body">
+      <div class="spec-grid">
+        <div class="spec-row"><div>Data Sources</div><div>1. SMS bank alerts (parsed on-device, no server upload)<br>2. Account Aggregator via Setu / Finvu (explicit consent)<br>3. Mini's own UPI transactions (auto-logged)</div></div>
+        <div class="spec-row"><div>Categories</div><div>Food & Dining · Transport · Groceries · Bills & Utilities · EMI/Loans · Entertainment · Shopping · Health · Education · Family Transfers · Other</div></div>
+        <div class="spec-row"><div>Daily Summary</div><div>Pushed at 9pm every day. Voice + text. "Aaj aapne ₹1,240 kharch kiye — ₹480 khane pe, ₹340 auto mein, ₹420 groceries." Tappable to drill down.</div></div>
+        <div class="spec-row"><div>Weekly Report</div><div>Sunday 10am. Compared to last week. Budget progress. Category breakdown. Biggest spend. Savings this week.</div></div>
+        <div class="spec-row"><div>Smart Alerts</div><div>Budget 80% used → alert. Unusual spike detected → alert. Merchant overcharge pattern → alert. Duplicate transaction → immediate alert.</div></div>
+        <div class="spec-row"><div>Privacy</div><div>SMS parsed entirely on-device. Raw SMS never leaves phone. Only structured {amount, merchant, category, timestamp} synced to server. Encrypted in transit.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-orange">
+    <h4>Categorization AI — Implementation</h4>
+    <p>Train a lightweight BERT-based classifier on 200,000 Indian bank SMS messages (synthetic + real, anonymized). Categories mapped to Indian merchant names — "Swiggy", "IRCTC", "BigBasket", "Zepto", kirana store names in Tamil script, etc. Model runs on-device (&lt;5MB) for privacy. Falls back to keyword rules when confidence &lt;70%. User can correct categories — corrections feed back into model via federated learning.</p>
+  </div>
+</section>
+
+<!-- ═══ SECTION: FEATURE 3 ═══ -->
+<section class="section" id="f3">
+  <div class="s-num">05</div>
+  <h2 class="s-title">Feature 3 —<br><em>Proactive Bill Manager</em></h2>
+  <p class="s-sub">Never miss a bill again. Mini tracks, reminds, and pays — all via voice.</p>
+
+  <div class="feature-spec">
+    <div class="feature-spec-head">
+      <h3>📋 F3 — Proactive Bill Manager <span class="badge badge-orange" style="margin-left:8px">P1 · Must Ship</span></h3>
+    </div>
+    <div class="feature-spec-body">
+      <div class="spec-grid">
+        <div class="spec-row"><div>Bill Types</div><div>Electricity (all state boards via BBPS) · Mobile prepaid/postpaid · Internet/broadband · Gas (PNG/LPG) · Water bill · OTT subscriptions · Insurance premiums · Loan EMIs · School fees · Rent</div></div>
+        <div class="spec-row"><div>Detection</div><div>Auto-detect from SMS patterns. "MSEDCL bill of ₹1,840 due on 15th" parsed and added to bill tracker automatically. User confirms on first detection.</div></div>
+        <div class="spec-row"><div>Reminders</div><div>7 days before · 3 days before · 1 day before · Day of (morning 8am) · Overdue (same day 6pm). All in user's language. Push + WhatsApp fallback.</div></div>
+        <div class="spec-row"><div>Payment</div><div>Via Setu BBPS integration. "Bijli ka bill bharo Mini" → shows amount → user says "haan" → paid. Setu handles all BBPS biller connections (800+ billers).</div></div>
+        <div class="spec-row"><div>Smart Features</div><div>Bill amount anomaly detection (>20% spike → alert). Due date prediction for irregular bills. "Aapka bill last 3 mahine mein badh raha hai" pattern alerts.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: FEATURE 4 ═══ -->
+<section class="section" id="f4">
+  <div class="s-num">06</div>
+  <h2 class="s-title">Feature 4 —<br><span class="blue">AI Savings Coach</span></h2>
+  <p class="s-sub">A financially intelligent friend who knows your transactions and helps you improve — conversationally, in your language.</p>
+
+  <div class="feature-spec">
+    <div class="feature-spec-head">
+      <h3>🤖 F4 — AI Savings Coach <span class="badge badge-orange" style="margin-left:8px">P1 · Must Ship</span></h3>
+    </div>
+    <div class="feature-spec-body">
+      <div class="spec-grid">
+        <div class="spec-row"><div>LLM Backend</div><div>Claude claude-sonnet-4-20250514 via Anthropic API. System prompt: financial coach persona, always responds in user's language, never gives specific investment advice, stays behavioural.</div></div>
+        <div class="spec-row"><div>Context Window</div><div>Last 90 days transactions + user profile + current Mini Score + active goals + bill history. Compressed to &lt;4,000 tokens per query.</div></div>
+        <div class="spec-row"><div>Proactive Insights</div><div>Pushed 3x/week. "Is haffte Swiggy pe 40% zyada kharch hua. Ghar pe banana try karo — ₹600 bachenge mahine mein." Always actionable. Always quantified.</div></div>
+        <div class="spec-row"><div>Conversational</div><div>User can ask anything financial: "Mujhe ₹50,000 emergency fund banana hai" → Mini creates a savings plan based on their actual income/expense pattern.</div></div>
+        <div class="spec-row"><div>Goal Tracking</div><div>User sets goals ("iPhone ke liye bachana hai — ₹80,000"). Mini tracks weekly progress, adjusts suggestions if off-track, celebrates milestones.</div></div>
+        <div class="spec-row"><div>Hard Guardrails</div><div>Never: specific stock/fund recommendations · loan amount advice · insurance product advice · tax filing advice. These trigger "iske liye expert se baat karo" response.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue">
+    <h4>The "Friend, Not Advisor" Principle</h4>
+    <p>Every Coach response must feel like a smart friend's advice, not a financial advisor's report. "Yaar, tune is mahine bahut kharch kiya Zomato pe" is correct tone. "Your food expenditure of ₹4,234 exceeds recommended budgetary allocation by 34%" is wrong tone. All LLM outputs go through a tone validator before display. This is product-critical — wrong tone kills retention.</p>
+  </div>
+</section>
+
+<!-- ═══ SECTION: FEATURE 5 ═══ -->
+<section class="section" id="f5">
+  <div class="s-num">07</div>
+  <h2 class="s-title">Feature 5 —<br><span class="purple">Mini Score™</span></h2>
+  <p class="s-sub">One number that replaces financial anxiety. 0–100. Updated weekly. Explained in plain language.</p>
+
+  <div class="feature-spec">
+    <div class="feature-spec-head">
+      <h3>⭐ F5 — Mini Score™ <span class="badge badge-orange" style="margin-left:8px">P1 · Must Ship</span></h3>
+    </div>
+    <div class="feature-spec-body">
+      <div class="spec-grid">
+        <div class="spec-row"><div>Score Range</div><div>0–100. Buckets: 0–40 (Starting Out 🌱) · 41–60 (Getting Better 📈) · 61–75 (Doing Well ✅) · 76–90 (Excellent 🌟) · 91–100 (Mini Champion 🏆)</div></div>
+        <div class="spec-row"><div>Components</div><div>Bill Payment Discipline (30%) · Spending Control vs Budget (25%) · Savings Rate (25%) · Income Stability (20%)</div></div>
+        <div class="spec-row"><div>Scoring Algorithm</div><div>Bill on time = +3pts/bill. Late = -5pts. Missed = -10pts. Under budget = +5pts/week. Savings rate &gt;10% = +8pts. Income regular = +5pts. Score decays 1pt/week without activity.</div></div>
+        <div class="spec-row"><div>Update Frequency</div><div>Weekly. Every Sunday 9am. With voice explanation: "Mini Score 74 ho gaya — 3 point badha! Bijli bill time pe bhari isliye."</div></div>
+        <div class="spec-row"><div>What It Unlocks</div><div>Score &gt;60: Mini Pro features unlocked. Score &gt;70: Pre-approved insurance offers. Score &gt;80: Partner loan pre-approval (Phase 2). Score badges shareable (WhatsApp).</div></div>
+        <div class="spec-row"><div>Gamification</div><div>Weekly streak counter. "7-week bill payment streak 🔥". Monthly improvement badge. "Top 10% in your city" social proof (anonymous cohort comparison).</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: SCREENS ═══ -->
+<section class="section" id="screens">
+  <div class="s-num">08</div>
+  <h2 class="s-title">Screen <em>Flows</em></h2>
+  <p class="s-sub">The five core screens every user sees daily. Designed for 5-inch screens, one-handed use, and 100ms interactions.</p>
+
+  <div class="screens-row">
+
+    <!-- Home Screen -->
+    <div class="screen-mock">
+      <div class="screen-notch"></div>
+      <div class="screen-label">Home · Dashboard</div>
+      <div class="screen-content">
+        <div class="home-greeting">Namaste, Rahul 👋</div>
+        <div class="home-balance">₹12,340 <small>.50</small></div>
+        <div class="balance-change">↑ ₹28,000 aaya · ↓ ₹15,660 gaya · is mahine</div>
+        <div class="quick-actions">
+          <div class="qa-item"><span class="qa-icon">🎤</span>Bolo</div>
+          <div class="qa-item"><span class="qa-icon">↗️</span>Bhejo</div>
+          <div class="qa-item"><span class="qa-icon">📋</span>Bills</div>
+          <div class="qa-item"><span class="qa-icon">📊</span>Score</div>
+        </div>
+        <div class="mini-card">
+          <span>Swiggy 🍔</span>
+          <span class="amount debit">-₹340</span>
+        </div>
+        <div class="mini-card">
+          <span>Salary 💰</span>
+          <span class="amount credit">+₹28,000</span>
+        </div>
+        <div class="mini-card">
+          <span>Bijli Bill ⚡</span>
+          <span class="amount debit">-₹1,840</span>
+        </div>
+        <div style="margin-top:12px;background:rgba(22,163,74,0.15);border-radius:8px;padding:10px;font-size:11px;color:#86efac">
+          💡 Mini Coach: Is haffte budget mein ho tum! ₹2,400 bache hain.
+        </div>
+      </div>
+    </div>
+
+    <!-- Voice Screen -->
+    <div class="screen-mock">
+      <div class="screen-notch"></div>
+      <div class="screen-label">Voice · Listening</div>
+      <div class="screen-content">
+        <div style="padding:20px 0">
+          <div class="voice-circle">🎤</div>
+          <div class="voice-text">Sun raha hoon...</div>
+          <div class="voice-transcript">"Maa ko 500 bhejni hain"</div>
+          <div style="background:rgba(22,163,74,0.15);border-radius:10px;padding:14px;margin-top:12px">
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:6px;font-family:'Geist Mono',monospace">CONFIRM KARO</div>
+            <div style="font-size:15px;color:white;margin-bottom:4px">Maa ko ₹500 bhejna hai?</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">UPI: maa@sbi</div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <div style="flex:1;background:rgba(255,255,255,0.08);border-radius:8px;padding:10px;text-align:center;font-size:13px;color:rgba(255,255,255,0.5)">Nahi</div>
+              <div style="flex:1;background:#16a34a;border-radius:8px;padding:10px;text-align:center;font-size:13px;color:white;font-weight:600">Haan, Bhejo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spending Screen -->
+    <div class="screen-mock">
+      <div class="screen-notch"></div>
+      <div class="screen-label">Spending · This Month</div>
+      <div class="screen-content">
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:4px;font-family:'Geist Mono',monospace">APRIL 2026</div>
+        <div style="font-size:28px;font-weight:700;color:white;margin-bottom:16px">₹15,660</div>
+        <div style="display:grid;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,0.06);border-radius:8px">
+            <span style="font-size:13px;color:rgba(255,255,255,0.8)">🍔 Khana</span>
+            <div style="text-align:right">
+              <div style="font-size:13px;color:white;font-weight:600">₹4,200</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4)">Budget ₹3,500 · +20%</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,0.06);border-radius:8px">
+            <span style="font-size:13px;color:rgba(255,255,255,0.8)">🚗 Transport</span>
+            <div style="text-align:right">
+              <div style="font-size:13px;color:#86efac;font-weight:600">₹2,100</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4)">Budget ₹2,500 · ✓ OK</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,0.06);border-radius:8px">
+            <span style="font-size:13px;color:rgba(255,255,255,0.8)">⚡ Bills</span>
+            <div style="text-align:right">
+              <div style="font-size:13px;color:#86efac;font-weight:600">₹3,840</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4)">Sab paid ✓</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,0.06);border-radius:8px">
+            <span style="font-size:13px;color:rgba(255,255,255,0.8)">🛒 Groceries</span>
+            <div style="text-align:right">
+              <div style="font-size:13px;color:white;font-weight:600">₹5,520</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4)">Budget ₹6,000 · ✓ OK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bills Screen -->
+    <div class="screen-mock">
+      <div class="screen-notch"></div>
+      <div class="screen-label">Bills · Manager</div>
+      <div class="screen-content">
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;font-family:'Geist Mono',monospace">UPCOMING BILLS</div>
+        <div style="padding:12px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="color:white;font-size:13px">⚡ MSEDCL</span>
+            <span style="color:#fca5a5;font-size:11px;font-family:'Geist Mono',monospace">KAL DUE</span>
+          </div>
+          <div style="font-size:22px;color:white;font-weight:700">₹1,840</div>
+          <div style="margin-top:8px;background:#dc2626;border-radius:6px;padding:8px;text-align:center;font-size:12px;color:white">Abhi Bharo</div>
+        </div>
+        <div style="padding:12px;background:rgba(217,119,6,0.1);border:1px solid rgba(217,119,6,0.25);border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="color:white;font-size:13px">📱 Airtel</span>
+            <span style="color:#fcd34d;font-size:11px;font-family:'Geist Mono',monospace">5 DIN</span>
+          </div>
+          <div style="font-size:22px;color:white;font-weight:700">₹299</div>
+        </div>
+        <div style="padding:12px;background:rgba(255,255,255,0.06);border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="color:rgba(255,255,255,0.8);font-size:13px">🏠 House Loan EMI</span>
+            <span style="color:rgba(255,255,255,0.4);font-size:11px;font-family:'Geist Mono',monospace">12 DIN</span>
+          </div>
+          <div style="font-size:22px;color:white;font-weight:700">₹8,500</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score Screen -->
+    <div class="screen-mock">
+      <div class="screen-notch"></div>
+      <div class="screen-label">Mini Score™</div>
+      <div class="screen-content">
+        <div class="score-num">74</div>
+        <div class="score-label">Mini Score™ · Doing Well ✅</div>
+        <div style="background:rgba(22,163,74,0.12);border-radius:8px;padding:10px;margin-bottom:14px;font-size:11px;color:#86efac;text-align:center">
+          ↑ 3 points badha pichle hafte se 🎉
+        </div>
+        <div class="score-bar-row">
+          <div class="score-bar-label"><span>Bill Discipline</span><span style="color:#86efac">Excellent</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:90%"></div></div>
+        </div>
+        <div class="score-bar-row">
+          <div class="score-bar-label"><span>Spending Control</span><span style="color:#fcd34d">Fair</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:60%;background:#d97706"></div></div>
+        </div>
+        <div class="score-bar-row">
+          <div class="score-bar-label"><span>Savings Rate</span><span style="color:#fcd34d">Improving</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:55%;background:#d97706"></div></div>
+        </div>
+        <div class="score-bar-row">
+          <div class="score-bar-label"><span>Income Stability</span><span style="color:#86efac">Good</span></div>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:80%"></div></div>
+        </div>
+        <div style="margin-top:12px;background:rgba(255,255,255,0.06);border-radius:8px;padding:10px;font-size:11px;color:rgba(255,255,255,0.6)">
+          🎯 Next goal: Score 80 karo → FD offers unlock honge
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ SECTION: DATABASE SCHEMA ═══ -->
+<section class="section" id="schema">
+  <div class="s-num">09</div>
+  <h2 class="s-title">Database <em>Schema</em></h2>
+  <p class="s-sub">PostgreSQL with TimescaleDB for time-series transactions. Redis for sessions and real-time. All PII encrypted at column level.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+      <span>schema.sql · PostgreSQL 16 + TimescaleDB</span>
+    </div>
+    <div class="code-body">
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- USERS TABLE</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> users (
+  id              <span class="type">UUID</span> <span class="kw">PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  phone           <span class="type">TEXT</span> <span class="kw">NOT NULL UNIQUE</span>,          <span class="cm">-- encrypted, E.164 format</span>
+  phone_hash      <span class="type">TEXT</span> <span class="kw">NOT NULL UNIQUE</span>,          <span class="cm">-- SHA-256 for lookup</span>
+  name            <span class="type">TEXT</span>,                             <span class="cm">-- encrypted</span>
+  language        <span class="type">TEXT</span> <span class="kw">DEFAULT</span> <span class="str">'hi'</span>,             <span class="cm">-- hi, ta, te, en, mr, gu...</span>
+  upi_id          <span class="type">TEXT</span>,                             <span class="cm">-- encrypted</span>
+  razorpay_cid    <span class="type">TEXT</span>,                             <span class="cm">-- Razorpay customer ID</span>
+  permission_level <span class="type">INT DEFAULT</span> <span class="num">1</span>,               <span class="cm">-- 1=observe, 2=confirm, 3=smart, 4=full</span>
+  trust_score     <span class="type">INT DEFAULT</span> <span class="num">50</span>,               <span class="cm">-- internal risk score</span>
+  mini_score      <span class="type">INT DEFAULT</span> <span class="num">0</span>,                <span class="cm">-- public Mini Score 0-100</span>
+  is_pro          <span class="type">BOOLEAN DEFAULT FALSE</span>,
+  onboarded_at    <span class="type">TIMESTAMPTZ</span>,
+  created_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>(),
+  updated_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- TRANSACTIONS TABLE (TimescaleDB hypertable)</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> transactions (
+  id              <span class="type">UUID</span> <span class="kw">DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  user_id         <span class="type">UUID</span> <span class="kw">REFERENCES</span> users(id) <span class="kw">ON DELETE CASCADE</span>,
+  amount          <span class="type">NUMERIC(12,2) NOT NULL</span>,
+  type            <span class="type">TEXT NOT NULL</span>,                   <span class="cm">-- debit | credit</span>
+  category        <span class="type">TEXT</span>,                             <span class="cm">-- food, transport, bills...</span>
+  category_confidence <span class="type">FLOAT</span>,                    <span class="cm">-- 0.0-1.0 ML confidence</span>
+  merchant        <span class="type">TEXT</span>,                             <span class="cm">-- merchant name</span>
+  merchant_upi    <span class="type">TEXT</span>,                             <span class="cm">-- UPI ID of merchant</span>
+  counterparty    <span class="type">TEXT</span>,                             <span class="cm">-- encrypted</span>
+  source          <span class="type">TEXT</span>,                             <span class="cm">-- sms | aa | mini_upi | manual</span>
+  source_ref      <span class="type">TEXT</span>,                             <span class="cm">-- external reference ID</span>
+  razorpay_pid    <span class="type">TEXT</span>,                             <span class="cm">-- Razorpay payment ID</span>
+  status          <span class="type">TEXT DEFAULT</span> <span class="str">'completed'</span>,      <span class="cm">-- pending|completed|failed|refunded</span>
+  raw_sms         <span class="type">TEXT</span>,                             <span class="cm">-- encrypted, deleted after 30d</span>
+  user_note       <span class="type">TEXT</span>,
+  txn_time        <span class="type">TIMESTAMPTZ NOT NULL</span>,           <span class="cm">-- actual transaction time</span>
+  created_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- Convert to TimescaleDB hypertable, partitioned by month</span>
+<span class="kw">SELECT</span> <span class="fn">create_hypertable</span>(<span class="str">'transactions'</span>, <span class="str">'txn_time'</span>);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- BILLS TABLE</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> bills (
+  id              <span class="type">UUID PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  user_id         <span class="type">UUID REFERENCES</span> users(id),
+  biller_name     <span class="type">TEXT NOT NULL</span>,                  <span class="cm">-- "MSEDCL", "Airtel"</span>
+  biller_id       <span class="type">TEXT</span>,                             <span class="cm">-- Setu BBPS biller ID</span>
+  biller_category <span class="type">TEXT</span>,                            <span class="cm">-- electricity|mobile|internet...</span>
+  account_ref     <span class="type">TEXT</span>,                             <span class="cm">-- encrypted consumer number</span>
+  amount_last     <span class="type">NUMERIC(10,2)</span>,
+  amount_avg      <span class="type">NUMERIC(10,2)</span>,
+  due_day         <span class="type">INT</span>,                              <span class="cm">-- day of month usually due</span>
+  due_date_next   <span class="type">DATE</span>,
+  auto_pay        <span class="type">BOOLEAN DEFAULT FALSE</span>,
+  reminder_days   <span class="type">INT[] DEFAULT</span> <span class="str">'{7,3,1}'</span>,
+  is_active       <span class="type">BOOLEAN DEFAULT TRUE</span>,
+  detected_from   <span class="type">TEXT</span>,                            <span class="cm">-- sms | manual | aa</span>
+  created_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- MINI SCORE HISTORY</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> mini_score_history (
+  id              <span class="type">UUID PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  user_id         <span class="type">UUID REFERENCES</span> users(id),
+  score           <span class="type">INT NOT NULL</span>,
+  score_bill      <span class="type">INT</span>,                              <span class="cm">-- sub-score components</span>
+  score_spending  <span class="type">INT</span>,
+  score_savings   <span class="type">INT</span>,
+  score_income    <span class="type">INT</span>,
+  delta           <span class="type">INT</span>,                              <span class="cm">-- change from last week</span>
+  explanation     <span class="type">TEXT</span>,                            <span class="cm">-- in user's language</span>
+  computed_at     <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- BUDGETS</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> budgets (
+  id              <span class="type">UUID PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  user_id         <span class="type">UUID REFERENCES</span> users(id),
+  category        <span class="type">TEXT NOT NULL</span>,
+  amount_monthly  <span class="type">NUMERIC(10,2)</span>,
+  period          <span class="type">TEXT DEFAULT</span> <span class="str">'monthly'</span>,
+  is_active       <span class="type">BOOLEAN DEFAULT TRUE</span>,
+  created_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- SAVINGS GOALS</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> savings_goals (
+  id              <span class="type">UUID PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  user_id         <span class="type">UUID REFERENCES</span> users(id),
+  name            <span class="type">TEXT NOT NULL</span>,                  <span class="cm">-- "iPhone ke liye"</span>
+  target_amount   <span class="type">NUMERIC(10,2)</span>,
+  saved_amount    <span class="type">NUMERIC(10,2) DEFAULT 0</span>,
+  target_date     <span class="type">DATE</span>,
+  weekly_target   <span class="type">NUMERIC(10,2)</span>,                 <span class="cm">-- computed by AI</span>
+  status          <span class="type">TEXT DEFAULT</span> <span class="str">'active'</span>,        <span class="cm">-- active|achieved|abandoned</span>
+  created_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- CONTACTS (for UPI sends)</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> user_contacts (
+  id              <span class="type">UUID PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  user_id         <span class="type">UUID REFERENCES</span> users(id),
+  name            <span class="type">TEXT NOT NULL</span>,                  <span class="cm">-- "Maa", "Rahul bhai"</span>
+  name_aliases    <span class="type">TEXT[]</span>,                          <span class="cm">-- ["Maa", "Amma", "Mummy"]</span>
+  upi_id          <span class="type">TEXT</span>,                            <span class="cm">-- encrypted</span>
+  phone           <span class="type">TEXT</span>,                            <span class="cm">-- encrypted</span>
+  send_count      <span class="type">INT DEFAULT 0</span>,
+  last_sent_at    <span class="type">TIMESTAMPTZ</span>,
+  is_trusted      <span class="type">BOOLEAN DEFAULT FALSE</span>,         <span class="cm">-- auto-confirm for trusted</span>
+  created_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- VOICE SESSIONS (audit trail)</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE TABLE</span> voice_sessions (
+  id              <span class="type">UUID PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span>(),
+  user_id         <span class="type">UUID REFERENCES</span> users(id),
+  transcript      <span class="type">TEXT</span>,                            <span class="cm">-- deleted after 30 days</span>
+  intent          <span class="type">TEXT</span>,
+  entities        <span class="type">JSONB</span>,
+  action_taken    <span class="type">TEXT</span>,
+  action_result   <span class="type">TEXT</span>,
+  latency_ms      <span class="type">INT</span>,
+  asr_confidence  <span class="type">FLOAT</span>,
+  language        <span class="type">TEXT</span>,
+  created_at      <span class="type">TIMESTAMPTZ DEFAULT NOW</span>()
+);
+
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="cm">-- KEY INDEXES</span>
+<span class="cm">-- ═══════════════════════════════════</span>
+<span class="kw">CREATE INDEX</span> idx_txn_user_time <span class="kw">ON</span> transactions (user_id, txn_time <span class="kw">DESC</span>);
+<span class="kw">CREATE INDEX</span> idx_txn_category <span class="kw">ON</span> transactions (user_id, category, txn_time <span class="kw">DESC</span>);
+<span class="kw">CREATE INDEX</span> idx_bills_due <span class="kw">ON</span> bills (user_id, due_date_next);
+<span class="kw">CREATE INDEX</span> idx_contacts_user <span class="kw">ON</span> user_contacts (user_id);
+<span class="kw">CREATE INDEX</span> users_phone_hash <span class="kw">ON</span> users (phone_hash);
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: API DESIGN ═══ -->
+<section class="section" id="apis">
+  <div class="s-num">10</div>
+  <h2 class="s-title">API <span class="green">Design</span></h2>
+  <p class="s-sub">RESTful + WebSocket. All endpoints authenticated via JWT. Rate limited. Versioned from Day 1.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+      <span>api-spec.yaml · OpenAPI 3.1</span>
+    </div>
+    <div class="code-body">
+<span class="cm"># ─── AUTH ───────────────────────────</span>
+<span class="kw">POST</span>   /api/v1/auth/otp/send          <span class="cm"># Send OTP to phone</span>
+<span class="kw">POST</span>   /api/v1/auth/otp/verify        <span class="cm"># Verify OTP → return JWT</span>
+<span class="kw">POST</span>   /api/v1/auth/refresh           <span class="cm"># Refresh JWT</span>
+<span class="kw">DELETE</span> /api/v1/auth/session           <span class="cm"># Logout</span>
+
+<span class="cm"># ─── VOICE ──────────────────────────</span>
+<span class="kw">POST</span>   /api/v1/voice/process          <span class="cm"># Upload audio → get intent + action</span>
+<span class="kw">POST</span>   /api/v1/voice/text             <span class="cm"># Text input → get intent + action</span>
+<span class="kw">GET</span>    /api/v1/voice/history          <span class="cm"># Last 50 voice sessions</span>
+<span class="kw">WS</span>     /api/v1/voice/stream           <span class="cm"># Real-time streaming ASR</span>
+
+<span class="cm"># ─── PAYMENTS ───────────────────────</span>
+<span class="kw">POST</span>   /api/v1/payments/upi/initiate  <span class="cm"># Create UPI payment intent</span>
+<span class="kw">POST</span>   /api/v1/payments/upi/confirm   <span class="cm"># Execute confirmed payment</span>
+<span class="kw">GET</span>    /api/v1/payments/balance       <span class="cm"># Get account balance</span>
+<span class="kw">GET</span>    /api/v1/payments/:id           <span class="cm"># Payment status</span>
+<span class="kw">POST</span>   /api/v1/payments/request       <span class="cm"># Request money from contact</span>
+
+<span class="cm"># ─── TRANSACTIONS ───────────────────</span>
+<span class="kw">GET</span>    /api/v1/transactions           <span class="cm"># List with filters</span>
+<span class="kw">GET</span>    /api/v1/transactions/summary   <span class="cm"># Aggregated by period+category</span>
+<span class="kw">PATCH</span>  /api/v1/transactions/:id      <span class="cm"># Update category or note</span>
+<span class="kw">POST</span>   /api/v1/transactions/sms       <span class="cm"># Bulk ingest parsed SMS (on-device)</span>
+
+<span class="cm"># ─── BILLS ──────────────────────────</span>
+<span class="kw">GET</span>    /api/v1/bills                  <span class="cm"># All bills for user</span>
+<span class="kw">POST</span>   /api/v1/bills                  <span class="cm"># Add bill manually</span>
+<span class="kw">GET</span>    /api/v1/bills/upcoming         <span class="cm"># Next 30 days</span>
+<span class="kw">POST</span>   /api/v1/bills/:id/pay         <span class="cm"># Pay via BBPS</span>
+<span class="kw">PATCH</span>  /api/v1/bills/:id            <span class="cm"># Update reminder settings</span>
+<span class="kw">DELETE</span> /api/v1/bills/:id            <span class="cm"># Remove bill</span>
+
+<span class="cm"># ─── SCORE ──────────────────────────</span>
+<span class="kw">GET</span>    /api/v1/score/current          <span class="cm"># Current Mini Score + breakdown</span>
+<span class="kw">GET</span>    /api/v1/score/history          <span class="cm"># Weekly score history</span>
+<span class="kw">GET</span>    /api/v1/score/tips             <span class="cm"># AI tips to improve score</span>
+
+<span class="cm"># ─── COACH ──────────────────────────</span>
+<span class="kw">POST</span>   /api/v1/coach/message         <span class="cm"># Send message, get AI response</span>
+<span class="kw">GET</span>    /api/v1/coach/insights        <span class="cm"># Latest proactive insights</span>
+<span class="kw">GET</span>    /api/v1/coach/history         <span class="cm"># Conversation history (30d)</span>
+
+<span class="cm"># ─── CONTACTS ───────────────────────</span>
+<span class="kw">GET</span>    /api/v1/contacts               <span class="cm"># User's saved contacts</span>
+<span class="kw">POST</span>   /api/v1/contacts               <span class="cm"># Add contact</span>
+<span class="kw">PATCH</span>  /api/v1/contacts/:id          <span class="cm"># Update alias, UPI ID</span>
+
+<span class="cm"># ─── USER ───────────────────────────</span>
+<span class="kw">GET</span>    /api/v1/user/profile           <span class="cm"># Profile + preferences</span>
+<span class="kw">PATCH</span>  /api/v1/user/profile          <span class="cm"># Update language, name, etc</span>
+<span class="kw">POST</span>   /api/v1/user/aa/link          <span class="cm"># Link via Account Aggregator</span>
+<span class="kw">DELETE</span> /api/v1/user/data             <span class="cm"># DPDP right to erasure</span>
+
+<span class="cm"># ─── BUDGETS ────────────────────────</span>
+<span class="kw">GET</span>    /api/v1/budgets                <span class="cm"># All budgets</span>
+<span class="kw">POST</span>   /api/v1/budgets                <span class="cm"># Create budget</span>
+<span class="kw">PATCH</span>  /api/v1/budgets/:id           <span class="cm"># Update</span>
+<span class="kw">GET</span>    /api/v1/budgets/status        <span class="cm"># Current month usage vs budget</span>
+
+<span class="cm"># ─── NOTIFICATIONS ──────────────────</span>
+<span class="kw">GET</span>    /api/v1/notifications          <span class="cm"># All notifications</span>
+<span class="kw">PATCH</span>  /api/v1/notifications/:id     <span class="cm"># Mark read</span>
+<span class="kw">PATCH</span>  /api/v1/notifications/settings <span class="cm"># Update preferences</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: BACKEND ═══ -->
+<section class="section" id="backend">
+  <div class="s-num">11</div>
+  <h2 class="s-title">Backend <em>Architecture</em></h2>
+  <p class="s-sub">Microservices-lite. Not over-engineered. 5 focused services that can be maintained by a 4-person backend team.</p>
+
+  <div class="api-flow">
+    <div class="api-step">
+      <div class="api-step-num" style="background:#ea580c">1</div>
+      <div>
+        <h4>API Gateway (Kong / AWS API Gateway)</h4>
+        <p>Rate limiting · JWT validation · Request routing · SSL termination · CORS. All mobile requests hit gateway first. 10,000 req/min per service limit MVP.</p>
+      </div>
+    </div>
+    <div class="api-step">
+      <div class="api-step-num" style="background:#7c3aed">2</div>
+      <div>
+        <h4>Voice Service (Node.js + Python)</h4>
+        <p>Receives audio → calls Sarvam AI ASR → returns transcript → runs intent classification (custom model) → extracts entities → returns structured intent. Target: &lt;800ms total. WebSocket for real-time streaming.</p>
+      </div>
+    </div>
+    <div class="api-step">
+      <div class="api-step-num" style="background:#2563eb">3</div>
+      <div>
+        <h4>Payments Service (Node.js)</h4>
+        <p>Wraps Razorpay SDK. Handles UPI initiation, confirmation, status polling. Idempotency keys on all payment requests (never double-charge). Webhook receiver for Razorpay callbacks. Setu BBPS for bill payments.</p>
+      </div>
+    </div>
+    <div class="api-step">
+      <div class="api-step-num" style="background:#16a34a">4</div>
+      <div>
+        <h4>Intelligence Service (Python / FastAPI)</h4>
+        <p>Transaction categorization ML · SMS parser · Mini Score calculator · Spending summary generator · Budget alert logic. Runs as async workers. Processes events from Kafka queue. No user-facing latency dependency.</p>
+      </div>
+    </div>
+    <div class="api-step">
+      <div class="api-step-num" style="background:#d97706">5</div>
+      <div>
+        <h4>Coach Service (Python)</h4>
+        <p>Manages conversations with Claude API. Builds context window from user's transaction history. Enforces guardrails (no investment advice). Generates proactive insights 3x/week. Stores conversation history in Redis (30-day TTL).</p>
+      </div>
+    </div>
+    <div class="api-step">
+      <div class="api-step-num" style="background:#0f172a">6</div>
+      <div>
+        <h4>Notification Service (Node.js)</h4>
+        <p>Firebase FCM for push · WhatsApp Business API for WhatsApp · SMS via Twilio/Kaleyra fallback. Bill reminder scheduler (cron). Daily summary trigger 9pm per user timezone. Templated in 12 languages.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block" style="margin-top:32px">
+    <div class="code-header">
+      <div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+      <span>voice-intent-handler.ts · Voice Service</span>
+    </div>
+    <div class="code-body">
+<span class="kw">interface</span> <span class="type">VoiceIntent</span> {
+  intent: <span class="type">string</span>;          <span class="cm">// 'send_money' | 'check_balance' | 'pay_bill' ...</span>
+  confidence: <span class="type">number</span>;     <span class="cm">// 0.0 - 1.0</span>
+  entities: {
+    amount?:     <span class="type">number</span>;
+    contact?:    <span class="type">string</span>;  <span class="cm">// resolved from user_contacts</span>
+    upi_id?:     <span class="type">string</span>;
+    bill_type?:  <span class="type">string</span>;
+    period?:     <span class="type">string</span>;  <span class="cm">// 'today' | 'this_week' | 'this_month'</span>
+    urgency?:    <span class="type">'high' | 'normal'</span>;
+  };
+  language:    <span class="type">string</span>;     <span class="cm">// detected language code</span>
+  raw_text:    <span class="type">string</span>;     <span class="cm">// ASR transcript</span>
+}
+
+<span class="kw">async function</span> <span class="fn">processVoiceCommand</span>(
+  audioBuffer: <span class="type">Buffer</span>,
+  userId: <span class="type">string</span>
+): <span class="type">Promise</span>&lt;<span class="type">AgentResponse</span>&gt; {
+
+  <span class="cm">// Step 1: ASR — audio to text</span>
+  <span class="kw">const</span> transcript = <span class="kw">await</span> <span class="fn">sarvamASR</span>(audioBuffer, {
+    language: <span class="str">'hi-IN'</span>,     <span class="cm">// auto-detect if unknown</span>
+    model: <span class="str">'saaras-v2'</span>,
+    domain: <span class="str">'financial'</span>  <span class="cm">// fine-tuned vocabulary</span>
+  });
+
+  <span class="cm">// Step 2: Intent Classification</span>
+  <span class="kw">const</span> intent = <span class="kw">await</span> <span class="fn">classifyIntent</span>(transcript.text);
+
+  <span class="cm">// Step 3: Entity Resolution</span>
+  <span class="kw">const</span> resolved = <span class="kw">await</span> <span class="fn">resolveEntities</span>(intent, userId);
+  <span class="cm">// "Maa" → look up user_contacts WHERE name_aliases @> ['Maa']</span>
+
+  <span class="cm">// Step 4: Permission Check</span>
+  <span class="kw">const</span> allowed = <span class="kw">await</span> <span class="fn">checkPermission</span>(userId, resolved.intent, {
+    amount: resolved.entities.amount,
+    isNewContact: resolved.isNewContact
+  });
+
+  <span class="cm">// Step 5: Route to appropriate handler</span>
+  <span class="kw">switch</span> (resolved.intent) {
+    <span class="kw">case</span> <span class="str">'send_money'</span>:
+      <span class="kw">return</span> <span class="fn">handleSendMoney</span>(resolved, allowed.requireConfirm);
+    <span class="kw">case</span> <span class="str">'check_balance'</span>:
+      <span class="kw">return</span> <span class="fn">handleCheckBalance</span>(userId);
+    <span class="kw">case</span> <span class="str">'pay_bill'</span>:
+      <span class="kw">return</span> <span class="fn">handlePayBill</span>(resolved, userId);
+    <span class="kw">case</span> <span class="str">'spending_summary'</span>:
+      <span class="kw">return</span> <span class="fn">handleSpendingSummary</span>(resolved.entities.period, userId);
+    <span class="kw">default</span>:
+      <span class="kw">return</span> <span class="fn">handleCoachQuery</span>(transcript.text, userId);
+  }
+}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: TECH STACK ═══ -->
+<section class="section" id="stack">
+  <div class="s-num">12</div>
+  <h2 class="s-title">Tech <span class="blue">Stack</span></h2>
+  <p class="s-sub">Chosen for Indian hiring market availability, cost efficiency, and startup scalability. No over-engineering.</p>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Mobile App</div>
+    <div class="tech-pills">
+      <div class="tech-pill">React Native 0.74<span class="tp-sub">iOS + Android single codebase</span></div>
+      <div class="tech-pill">Expo (managed)<span class="tp-sub">Fast iteration, OTA updates</span></div>
+      <div class="tech-pill">Zustand<span class="tp-sub">State management</span></div>
+      <div class="tech-pill">React Query<span class="tp-sub">API state + caching</span></div>
+      <div class="tech-pill">Reanimated 3<span class="tp-sub">60fps animations</span></div>
+      <div class="tech-pill">MMKV<span class="tp-sub">Encrypted local storage</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Voice / NLP</div>
+    <div class="tech-pills">
+      <div class="tech-pill">Sarvam AI Saaras<span class="tp-sub">Indian ASR - best in class</span></div>
+      <div class="tech-pill">Custom Intent Classifier<span class="tp-sub">Fine-tuned MuRIL / IndicBERT</span></div>
+      <div class="tech-pill">spaCy + Custom NER<span class="tp-sub">Entity extraction</span></div>
+      <div class="tech-pill">Coqui TTS<span class="tp-sub">Hindi/Tamil voice output</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Backend</div>
+    <div class="tech-pills">
+      <div class="tech-pill">Node.js + Fastify<span class="tp-sub">API services (payments, auth)</span></div>
+      <div class="tech-pill">Python + FastAPI<span class="tp-sub">ML services (intelligence, coach)</span></div>
+      <div class="tech-pill">Kong Gateway<span class="tp-sub">Rate limiting, auth, routing</span></div>
+      <div class="tech-pill">Bull + Redis<span class="tp-sub">Job queues</span></div>
+      <div class="tech-pill">Kafka<span class="tp-sub">Event streaming</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Database</div>
+    <div class="tech-pills">
+      <div class="tech-pill">PostgreSQL 16<span class="tp-sub">Primary data store</span></div>
+      <div class="tech-pill">TimescaleDB<span class="tp-sub">Transaction time-series</span></div>
+      <div class="tech-pill">Redis 7<span class="tp-sub">Sessions, cache, queues</span></div>
+      <div class="tech-pill">S3 (AWS Mumbai)<span class="tp-sub">Audio files (temp, encrypted)</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">AI / LLM</div>
+    <div class="tech-pills">
+      <div class="tech-pill">Anthropic Claude<span class="tp-sub">Savings Coach conversations</span></div>
+      <div class="tech-pill">Custom categorizer<span class="tp-sub">BERT fine-tuned on Indian SMS</span></div>
+      <div class="tech-pill">Sentence Transformers<span class="tp-sub">Contact name matching</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Payments</div>
+    <div class="tech-pills">
+      <div class="tech-pill">Razorpay UPI SDK<span class="tp-sub">UPI payments rail</span></div>
+      <div class="tech-pill">Setu BBPS<span class="tp-sub">Bill payments, 800+ billers</span></div>
+      <div class="tech-pill">Finvu AA<span class="tp-sub">Account Aggregator / bank data</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Infrastructure</div>
+    <div class="tech-pills">
+      <div class="tech-pill">AWS Mumbai (ap-south-1)<span class="tp-sub">Primary region, RBI compliant</span></div>
+      <div class="tech-pill">AWS Chennai<span class="tp-sub">DR region</span></div>
+      <div class="tech-pill">Terraform<span class="tp-sub">Infrastructure as code</span></div>
+      <div class="tech-pill">Docker + ECS<span class="tp-sub">Container orchestration</span></div>
+      <div class="tech-pill">CloudFront CDN<span class="tp-sub">Static assets, APK delivery</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Notifications</div>
+    <div class="tech-pills">
+      <div class="tech-pill">Firebase FCM<span class="tp-sub">Push notifications</span></div>
+      <div class="tech-pill">WhatsApp Business API<span class="tp-sub">Via Interakt / Gupshup</span></div>
+      <div class="tech-pill">Kaleyra SMS<span class="tp-sub">OTP + fallback SMS</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-layer-name">Observability</div>
+    <div class="tech-pills">
+      <div class="tech-pill">Datadog<span class="tp-sub">APM, logs, metrics</span></div>
+      <div class="tech-pill">Sentry<span class="tp-sub">Mobile crash reporting</span></div>
+      <div class="tech-pill">PostHog<span class="tp-sub">Product analytics</span></div>
+      <div class="tech-pill">PagerDuty<span class="tp-sub">On-call alerting</span></div>
+    </div>
+  </div>
+
+  <div class="arch-row" style="border-bottom:none">
+    <div class="arch-layer-name">Security</div>
+    <div class="tech-pills">
+      <div class="tech-pill">AWS KMS<span class="tp-sub">Encryption key management</span></div>
+      <div class="tech-pill">Vault (HashiCorp)<span class="tp-sub">Secrets management</span></div>
+      <div class="tech-pill">SSL Pinning<span class="tp-sub">Mobile API security</span></div>
+      <div class="tech-pill">OWASP Mobile Top 10<span class="tp-sub">Security checklist</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: ROADMAP ═══ -->
+<section class="section" id="roadmap">
+  <div class="s-num">13</div>
+  <h2 class="s-title">Build <em>Roadmap</em></h2>
+  <p class="s-sub">24-week sprint plan. Ship fast, validate faster. Every 2-week sprint has a demo-able output.</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-week">WEEK 1–2 · Foundation</div>
+      <div class="tl-title">🏗️ Project Setup & Auth</div>
+      <ul class="tl-tasks">
+        <li>Monorepo setup (Turborepo): mobile + backend + shared</li>
+        <li>React Native project, design system tokens, navigation skeleton</li>
+        <li>Auth service: OTP via Kaleyra, JWT, refresh tokens</li>
+        <li>PostgreSQL + TimescaleDB on AWS RDS. Schema v1 migrated.</li>
+        <li>CI/CD: GitHub Actions → ECS deploy on merge to main</li>
+        <li>Razorpay sandbox integrated. Test payments flowing.</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 3–4 · Voice MVP</div>
+      <div class="tl-title">🎤 Voice Pipeline Live</div>
+      <ul class="tl-tasks">
+        <li>Sarvam AI ASR integrated. Audio upload → transcript in &lt;600ms.</li>
+        <li>Intent classifier v1: top 20 intents, Hindi only</li>
+        <li>Entity extractor: amount, contact name, time period</li>
+        <li>Voice screen built in React Native. Press-to-talk working.</li>
+        <li>WebSocket streaming for real-time transcript display</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 5–6 · Payments</div>
+      <div class="tl-title">💸 UPI Payments End-to-End</div>
+      <ul class="tl-tasks">
+        <li>Razorpay UPI SDK in React Native. Send/receive working.</li>
+        <li>Contact resolution: "Maa" → UPI ID lookup from user_contacts</li>
+        <li>Confirm screen with biometric auth (FaceID/fingerprint)</li>
+        <li>Transaction logged on success. Auto-categorized by ML model v1.</li>
+        <li>Balance check via Razorpay API. &lt;2s response target.</li>
+        <li>Payment failure handling + retry logic</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 7–8 · SMS Parsing</div>
+      <div class="tl-title">📱 Transaction Intelligence</div>
+      <ul class="tl-tasks">
+        <li>On-device SMS parser (React Native Background Fetch)</li>
+        <li>Indian bank SMS regex patterns for 30 major banks</li>
+        <li>Structured transaction sync to server (amount, merchant, time)</li>
+        <li>Categorization ML model v1 deployed. 85%+ accuracy target.</li>
+        <li>Home screen: transaction list live from real SMS data</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 9–10 · Spending Intelligence</div>
+      <div class="tl-title">📊 Daily Summary Live</div>
+      <ul class="tl-tasks">
+        <li>Spending summary API: aggregated by category and period</li>
+        <li>Spending screen: category breakdown, month view, week view</li>
+        <li>Daily 9pm push notification with spending summary</li>
+        <li>Budget setup flow. Budget vs actual comparison.</li>
+        <li>Budget alert at 80% usage. Voice alert in Hindi.</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 11–12 · Bills</div>
+      <div class="tl-title">📋 Bill Manager Live</div>
+      <ul class="tl-tasks">
+        <li>Setu BBPS integration. Biller fetch + payment working.</li>
+        <li>Auto-detect bills from SMS patterns. Confirm flow.</li>
+        <li>Bill screen: upcoming bills, due dates, amounts</li>
+        <li>Reminder push notifications: 7d, 3d, 1d before</li>
+        <li>"Bijli bill bharo" voice command → confirm → pay end-to-end</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 13–14 · Mini Score</div>
+      <div class="tl-title">⭐ Mini Score™ Live</div>
+      <ul class="tl-tasks">
+        <li>Scoring algorithm: bill discipline + spending + savings + income</li>
+        <li>Weekly score computation job (Sunday 8am)</li>
+        <li>Score screen with component breakdown and history chart</li>
+        <li>Score improvement tips generated by Coach</li>
+        <li>Weekly score push notification with delta and voice explanation</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 15–16 · Coach</div>
+      <div class="tl-title">🤖 AI Savings Coach Live</div>
+      <ul class="tl-tasks">
+        <li>Claude API integrated. System prompt + guardrails finalized.</li>
+        <li>Context builder: last 90d transactions → compressed prompt</li>
+        <li>Coach chat screen in React Native</li>
+        <li>Proactive insights: 3x/week push with personalized tips</li>
+        <li>Savings goal creation flow. Weekly progress tracking.</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 17–18 · Tamil + Telugu</div>
+      <div class="tl-title">🗣️ Language Expansion</div>
+      <ul class="tl-tasks">
+        <li>Intent classifier trained on Tamil and Telugu utterances</li>
+        <li>All UI strings translated: Tamil, Telugu (professional translators)</li>
+        <li>TTS voice output in Tamil and Telugu</li>
+        <li>Coach conversations in Tamil and Telugu via Claude</li>
+        <li>Bill reminders in regional languages</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 19–20 · Account Aggregator</div>
+      <div class="tl-title">🏦 Deeper Bank Integration</div>
+      <ul class="tl-tasks">
+        <li>Finvu AA SDK integrated. Consent flow in Hindi/Tamil/Telugu.</li>
+        <li>Full bank statement pull. 12-month transaction history.</li>
+        <li>Historical spending analysis available immediately</li>
+        <li>Mini Score recalculated with richer data</li>
+        <li>Income detection from salary credits</li>
+      </ul>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-week">WEEK 21–22 · Polish & Performance</div>
+      <div class="tl-title">✨ Production Hardening</div>
+      <ul class="tl-tasks">
+        <li>APK size reduction to &lt;15MB. Performance on Redmi 9A tested.</li>
+        <li>Offline mode: basic features work without internet</li>
+        <li>Full security audit: SSL pinning, PII encryption, penetration test</li>
+        <li>DPDP compliance review with legal counsel</li>
+        <li>Accessibility: screen reader support, large text mode</li>
+      </ul>
+    </div>
+
+    <div class="tl-item" style="margin-bottom:0">
+      <div class="tl-week">WEEK 23–24 · Beta Launch</div>
+      <div class="tl-title">🚀 Invite-Only Beta</div>
+      <ul class="tl-tasks">
+        <li>500 hand-picked beta users in Bengaluru, Jaipur, Coimbatore</li>
+        <li>Daily NPS survey in Hindi. Weekly user interviews.</li>
+        <li>Bug bash week. All P0/P1 bugs resolved before wider launch.</li>
+        <li>App Store + Play Store submission and review</li>
+        <li>Waitlist landing page live. Begin collecting referrals.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: TEAM ═══ -->
+<section class="section" id="team">
+  <div class="s-num">14</div>
+  <h2 class="s-title">Team <span class="green">Structure</span></h2>
+  <p class="s-sub">10 people. Every hire is load-bearing. Nobody is overhead.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Role</th><th>Responsibilities</th><th>Must-Have Skills</th><th>Hire By</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>CEO / Co-Founder</strong></td>
+        <td>Product vision, fundraising, partnerships (Razorpay, Setu), hiring</td>
+        <td>India consumer product experience. Hindi + 1 regional language. Fintech passion.</td>
+        <td><span class="badge badge-red">Day 0</span></td>
+      </tr>
+      <tr>
+        <td><strong>CTO / Co-Founder</strong></td>
+        <td>Architecture, engineering hiring, NLP decisions, security</td>
+        <td>Full-stack, ML basics, Indian payments knowledge, leadership</td>
+        <td><span class="badge badge-red">Day 0</span></td>
+      </tr>
+      <tr>
+        <td><strong>NLP / ML Engineer</strong></td>
+        <td>ASR integration, intent classifier, SMS parser, categorization model</td>
+        <td>Indic NLP, PyTorch/HuggingFace, on-device ML, IndicBERT/MuRIL experience</td>
+        <td><span class="badge badge-red">Week 1</span></td>
+      </tr>
+      <tr>
+        <td><strong>Mobile Engineer (Android)</strong></td>
+        <td>React Native app, voice UI, payments integration, performance</td>
+        <td>React Native expert, Android deep knowledge, &lt;15MB APK experience, Jio phone testing</td>
+        <td><span class="badge badge-red">Week 1</span></td>
+      </tr>
+      <tr>
+        <td><strong>Backend Engineer #1</strong></td>
+        <td>Payments service, Auth, API gateway, Razorpay integration</td>
+        <td>Node.js, PostgreSQL, Razorpay API, security-first mindset</td>
+        <td><span class="badge badge-red">Week 1</span></td>
+      </tr>
+      <tr>
+        <td><strong>Backend Engineer #2</strong></td>
+        <td>Intelligence service, Coach service, Claude API, Kafka</td>
+        <td>Python/FastAPI, LLM prompt engineering, async processing</td>
+        <td><span class="badge badge-orange">Week 3</span></td>
+      </tr>
+      <tr>
+        <td><strong>Product Designer</strong></td>
+        <td>All screens, design system, user research in tier-2 cities, Hindi UI copy</td>
+        <td>Mobile-first, Bharat UX experience, Figma expert, speaks Hindi + regional</td>
+        <td><span class="badge badge-red">Week 1</span></td>
+      </tr>
+      <tr>
+        <td><strong>Product Manager</strong></td>
+        <td>Feature specs, user stories, sprint planning, beta user feedback</td>
+        <td>India fintech background, data-driven, speaks Hindi, has used tier-2 apps</td>
+        <td><span class="badge badge-orange">Week 2</span></td>
+      </tr>
+      <tr>
+        <td><strong>Compliance / Legal</strong></td>
+        <td>RBI guidance, DPDP compliance, Razorpay partner agreement, NPCI relations</td>
+        <td>Fintech regulatory expert. Has worked at Indian NBFC or payments company.</td>
+        <td><span class="badge badge-red">Week 1</span></td>
+      </tr>
+      <tr>
+        <td><strong>DevOps / SRE</strong></td>
+        <td>AWS setup, CI/CD, monitoring, on-call, security hardening</td>
+        <td>AWS (ECS, RDS, KMS), Terraform, Datadog, PagerDuty, 99.9% uptime obsession</td>
+        <td><span class="badge badge-orange">Week 2</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ SECTION: RISKS ═══ -->
+<section class="section" id="risks">
+  <div class="s-num">15</div>
+  <h2 class="s-title">Risk <em>Register</em></h2>
+  <p class="s-sub">Known risks, owners, and mitigations. Reviewed every 2 weeks in leadership sync.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Risk</th><th>Severity</th><th>Likelihood</th><th>Mitigation</th><th>Owner</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Razorpay API downtime during payment</strong></td>
+        <td><span class="badge badge-red">Critical</span></td>
+        <td><span class="badge badge-orange">Medium</span></td>
+        <td>Idempotency keys prevent double-charge. Fallback to PayU SDK. Clear "try again" UX in Hindi.</td>
+        <td>CTO</td>
+      </tr>
+      <tr>
+        <td><strong>Hindi voice accuracy &lt;85% in noisy environments</strong></td>
+        <td><span class="badge badge-orange">High</span></td>
+        <td><span class="badge badge-red">High</span></td>
+        <td>Text input always available. Noise cancellation model. Never execute payment if confidence &lt;80%.</td>
+        <td>NLP Lead</td>
+      </tr>
+      <tr>
+        <td><strong>DPDP Act compliance gap</strong></td>
+        <td><span class="badge badge-red">Critical</span></td>
+        <td><span class="badge badge-orange">Medium</span></td>
+        <td>Compliance hire Week 1. Full DPDP audit at Week 16. Data minimization by design from Day 1.</td>
+        <td>Legal</td>
+      </tr>
+      <tr>
+        <td><strong>SMS permission denied by users (Android 13+)</strong></td>
+        <td><span class="badge badge-orange">High</span></td>
+        <td><span class="badge badge-red">High</span></td>
+        <td>AA integration as primary. SMS as fallback. Clear value explanation before permission request.</td>
+        <td>PM</td>
+      </tr>
+      <tr>
+        <td><strong>App too heavy for budget Android phones</strong></td>
+        <td><span class="badge badge-orange">High</span></td>
+        <td><span class="badge badge-orange">Medium</span></td>
+        <td>APK size budget: 15MB hard limit. Weekly Redmi 9A performance test. No large on-device models.</td>
+        <td>Mobile Lead</td>
+      </tr>
+      <tr>
+        <td><strong>Claude API cost escalates with usage</strong></td>
+        <td><span class="badge badge-orange">Medium</span></td>
+        <td><span class="badge badge-orange">Medium</span></td>
+        <td>Context compression to &lt;4K tokens. Cache common responses. Rate limit coach to 10 msgs/day free tier.</td>
+        <td>CTO</td>
+      </tr>
+      <tr>
+        <td><strong>RBI changes UPI rules mid-build</strong></td>
+        <td><span class="badge badge-red">Critical</span></td>
+        <td><span class="badge badge-green">Low</span></td>
+        <td>Compliance hire monitors RBI circulars weekly. Razorpay handles most regulatory compliance as PA.</td>
+        <td>Legal</td>
+      </tr>
+      <tr>
+        <td><strong>User sends money to wrong contact (voice error)</strong></td>
+        <td><span class="badge badge-red">Critical</span></td>
+        <td><span class="badge badge-orange">Medium</span></td>
+        <td>Always show confirm screen with contact name + amount. Biometric on amounts &gt;₹1,000. 5-minute cancel window.</td>
+        <td>PM</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:32px">
+    <h4>The #1 Non-Negotiable Before Launch</h4>
+    <p>Zero tolerance for financial loss due to app error. Every payment must have: idempotency keys, confirmation step, biometric auth for amounts &gt;₹1,000, full audit trail, and a 24/7 Hindi-speaking support line. One viral story of "Mini ne galat jagah paise bhej diye" will kill the product. Get this right before acquiring a single user.</p>
+  </div>
+</section>
+
+</main>
+</body>
+</html>
