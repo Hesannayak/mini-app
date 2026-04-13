@@ -62,12 +62,22 @@ SUCCESS_TEMPLATES = {
 }
 
 
-async def process_audio(audio_bytes: bytes, user_language: Optional[str] = None) -> dict:
+async def process_audio(
+    audio_bytes: bytes,
+    user_language: Optional[str] = None,
+    content_type: str = "audio/wav",
+    filename: str = "audio.wav",
+) -> dict:
     """Process audio through the full 7-step voice pipeline."""
     start_time = time.time()
 
     # Step 1-2: Audio → ASR → transcript
-    asr_result = await asr_engine.transcribe(audio_bytes, language_hint=user_language)
+    asr_result = await asr_engine.transcribe(
+        audio_bytes,
+        language_hint=user_language,
+        content_type=content_type,
+        filename=filename,
+    )
     transcript = asr_result["transcript"]
     language = asr_result.get("language", user_language or "hi")
 

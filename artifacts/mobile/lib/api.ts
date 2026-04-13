@@ -2,15 +2,24 @@ import { Platform } from 'react-native';
 
 const isWeb = Platform.OS === 'web';
 
-const replitDomain = typeof window !== 'undefined'
+// Web: get domain from current window URL
+const webDomain = isWeb && typeof window !== 'undefined'
   ? window.location.hostname
   : null;
 
-const isReplit = replitDomain?.includes('.replit.dev') || replitDomain?.includes('.worf.replit.dev');
+// Native: use EXPO_PUBLIC_DOMAIN (= $REPLIT_DEV_DOMAIN, set in the dev script)
+const nativeDomain = process.env.EXPO_PUBLIC_DOMAIN ?? null;
+
+const replitDomain = isWeb ? webDomain : nativeDomain;
+
+const isReplit = Boolean(
+  replitDomain?.includes('.replit.dev') || replitDomain?.includes('.worf.replit.dev')
+);
 
 function serviceUrl(port: number, path: string): string {
-  if (isWeb && isReplit) {
-    return `https://${replitDomain?.replace(/:\d+$/, '')}:${port}${path}`;
+  if (isReplit && replitDomain) {
+    const clean = replitDomain.replace(/:\d+$/, '');
+    return `https://${clean}:${port}${path}`;
   }
   return `http://localhost:${port}${path}`;
 }
@@ -23,10 +32,10 @@ export const API = {
   score:        () => serviceUrl(3003, '/api/v1/score'),
   budgets:      () => serviceUrl(3003, '/api/v1/budgets'),
   transactions: () => serviceUrl(3003, '/api/v1/transactions'),
-  coach:        () => serviceUrl(5000, '/api/v1/coach'),   // port 5000 — Replit-exposed
+  coach:        () => serviceUrl(5000, '/api/v1/coach'),
 };
 
-/** fetch with a hard timeout (default 5 s). Throws on timeout. */
+/** fetch with a hard timeout (default 5 s). Throws on timeout/abort. */
 export async function apiFetch(url: string, init: RequestInit = {}, timeoutMs = 5000): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);

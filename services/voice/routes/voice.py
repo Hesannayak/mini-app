@@ -35,7 +35,14 @@ async def process_voice(
 ):
     """Process audio input through the voice pipeline."""
     audio_bytes = await audio.read()
-    result = await process_audio(audio_bytes, user_language=language)
+    content_type = audio.content_type or "audio/wav"
+    filename = audio.filename or "audio.wav"
+    result = await process_audio(
+        audio_bytes,
+        user_language=language,
+        content_type=content_type,
+        filename=filename,
+    )
     return result
 
 

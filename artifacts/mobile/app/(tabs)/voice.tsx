@@ -10,34 +10,46 @@ import Animated, {
   withTiming, withRepeat, withSequence, withDelay, Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Audio } from 'expo-av';
 import { useVoiceStore } from '@/store/voiceStore';
 import { useUserStore } from '@/store/userStore';
 import { VOICE_EXAMPLES } from '@/constants/intents';
 import { API, apiFetch } from '@/lib/api';
 
-// Web Speech API type shim
-declare const window: Window & {
-  SpeechRecognition?: new () => SpeechRecognition;
-  webkitSpeechRecognition?: new () => SpeechRecognition;
-};
-interface SpeechRecognition extends EventTarget {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onresult: ((e: any) => void) | null;
-  onerror: ((e: any) => void) | null;
+// ─── Web Speech API types ────────────────────────────────────────────────────
+interface SpeechRecognitionEvent { results: { 0: { 0: { transcript: string } } }[] }
+interface SpeechRecognitionI extends EventTarget {
+  lang: string; continuous: boolean; interimResults: boolean; maxAlternatives: number;
+  start(): void; stop(): void; abort(): void;
+  onresult: ((e: SpeechRecognitionEvent) => void) | null;
+  onerror: ((e: { error: string }) => void) | null;
   onend: (() => void) | null;
 }
 
-const LANG_MAP: Record<string, string> = {
-  hi: 'hi-IN',
-  ta: 'ta-IN',
-  te: 'te-IN',
-  en: 'en-IN',
+const LANG_MAP: Record<string, string> = { hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', en: 'en-IN' };
+
+// WAV recording preset for iOS (LinearPCM = native WAV)
+const RECORDING_OPTIONS: Audio.RecordingOptions = {
+  android: {
+    extension: '.m4a',
+    outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+    audioEncoder: Audio.AndroidAudioEncoder.AAC,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 128000,
+  },
+  ios: {
+    extension: '.wav',
+    outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+    audioQuality: Audio.IOSAudioQuality.HIGH,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 256000,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+  web: { mimeType: 'audio/webm', bitsPerSecond: 128000 },
 };
 
 export default function VoiceScreen() {
@@ -46,23 +58,19 @@ export default function VoiceScreen() {
   const insets = useSafeAreaInsets();
 
   const examples = VOICE_EXAMPLES[language] || VOICE_EXAMPLES.hi;
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const webRecRef = useRef<SpeechRecognitionI | null>(null);
+  const nativeRecRef = useRef<Audio.Recording | null>(null);
 
-  // Fallback text input (native or no mic permission)
   const [fallbackText, setFallbackText] = useState('');
-  const [useFallback, setUseFallback] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
 
-  // Ring animations
+  // ── Animations ──────────────────────────────────────────────────────────────
   const r1Scale = useSharedValue(1); const r1Opacity = useSharedValue(0);
   const r2Scale = useSharedValue(1); const r2Opacity = useSharedValue(0);
   const r3Scale = useSharedValue(1); const r3Opacity = useSharedValue(0);
   const btnScale = useSharedValue(1);
-  const b1 = useSharedValue(4);
-  const b2 = useSharedValue(4);
-  const b3 = useSharedValue(4);
-  const b4 = useSharedValue(4);
-  const b5 = useSharedValue(4);
-  const b6 = useSharedValue(4);
+  const b1 = useSharedValue(4); const b2 = useSharedValue(4); const b3 = useSharedValue(4);
+  const b4 = useSharedValue(4); const b5 = useSharedValue(4); const b6 = useSharedValue(4);
   const b7 = useSharedValue(4);
   const bars = [b1, b2, b3, b4, b5, b6, b7];
 
@@ -74,9 +82,9 @@ export default function VoiceScreen() {
   useEffect(() => {
     if (isListening) {
       btnScale.value = withTiming(1.08, { duration: 200, easing: Easing.out(Easing.back(2)) });
-      const ripple = (scale: Animated.SharedValue<number>, opacity: Animated.SharedValue<number>, delay: number) => {
-        scale.value = withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: 0 }), withTiming(2.4, { duration: 1800, easing: Easing.out(Easing.quad) })), -1));
-        opacity.value = withDelay(delay, withRepeat(withSequence(withTiming(0.55, { duration: 0 }), withTiming(0, { duration: 1800, easing: Easing.out(Easing.quad) })), -1));
+      const ripple = (s: typeof r1Scale, o: typeof r1Opacity, d: number) => {
+        s.value = withDelay(d, withRepeat(withSequence(withTiming(1, { duration: 0 }), withTiming(2.4, { duration: 1800, easing: Easing.out(Easing.quad) })), -1));
+        o.value = withDelay(d, withRepeat(withSequence(withTiming(0.55, { duration: 0 }), withTiming(0, { duration: 1800, easing: Easing.out(Easing.quad) })), -1));
       };
       ripple(r1Scale, r1Opacity, 0); ripple(r2Scale, r2Opacity, 600); ripple(r3Scale, r3Opacity, 1200);
       const heights = [12, 28, 44, 52, 44, 28, 12];
@@ -95,7 +103,7 @@ export default function VoiceScreen() {
   const ring1Style = useAnimatedStyle(() => ({ transform: [{ scale: r1Scale.value }], opacity: r1Opacity.value }));
   const ring2Style = useAnimatedStyle(() => ({ transform: [{ scale: r2Scale.value }], opacity: r2Opacity.value }));
   const ring3Style = useAnimatedStyle(() => ({ transform: [{ scale: r3Scale.value }], opacity: r3Opacity.value }));
-  const btnStyle = useAnimatedStyle(() => ({ transform: [{ scale: btnScale.value }] }));
+  const btnStyle  = useAnimatedStyle(() => ({ transform: [{ scale: btnScale.value }] }));
   const bar1S = useAnimatedStyle(() => ({ height: b1.value }));
   const bar2S = useAnimatedStyle(() => ({ height: b2.value }));
   const bar3S = useAnimatedStyle(() => ({ height: b3.value }));
@@ -105,22 +113,21 @@ export default function VoiceScreen() {
   const bar7S = useAnimatedStyle(() => ({ height: b7.value }));
   const barStyles = [bar1S, bar2S, bar3S, bar4S, bar5S, bar6S, bar7S];
 
-  // Core: send transcript to voice service, then coach service
+  // ── Core: process any text through voice → coach pipeline ────────────────────
   const processTranscript = async (text: string) => {
     setTranscript(text);
     setStatus('processing');
     if (Platform.OS !== 'web') Haptics.selectionAsync();
 
-    // Step 1: Voice service — intent + entity extraction
+    // Voice service: intent detection
     try {
       const res = await apiFetch(`${API.voice()}/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, language }),
-      }, 4000);
+      }, 5000);
       if (res.ok) {
         const data = await res.json();
-        // Voice service returned a complete response_text — use it
         if (data.response_text) {
           setResponse(data.response_text);
           setStatus('responding');
@@ -130,7 +137,7 @@ export default function VoiceScreen() {
       }
     } catch {}
 
-    // Step 2: Coach service — AI response fallback
+    // Coach service: Claude AI fallback
     try {
       const res = await apiFetch(`${API.coach()}/message`, {
         method: 'POST',
@@ -148,67 +155,124 @@ export default function VoiceScreen() {
       }
     } catch {}
 
-    setResponse('Samajh nahi aaya. Dobara bolein ya type karein.');
+    setResponse('Samajh nahi aaya. Dobara bolein ya neeche type karein.');
     setStatus('responding');
   };
 
+  // ── Web: Web Speech API ──────────────────────────────────────────────────────
   const startWebSpeech = () => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      setUseFallback(true);
-      return;
-    }
-    const rec: SpeechRecognition = new SR();
+    if (!SR) { setShowFallback(true); return; }
+    const rec: SpeechRecognitionI = new SR();
     rec.lang = LANG_MAP[language] || 'hi-IN';
     rec.continuous = false;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-    recognitionRef.current = rec;
+    webRecRef.current = rec;
 
-    rec.onresult = (e: any) => {
-      const text: string = e.results[0][0].transcript;
-      processTranscript(text);
-    };
-    rec.onerror = (e: any) => {
-      if (e.error === 'not-allowed' || e.error === 'service-not-available') {
-        setUseFallback(true);
-        setStatus('idle');
-      } else {
-        setResponse('Mic access nahi mila. Neeche type karein.');
-        setStatus('responding');
-      }
+    rec.onresult = (e) => { processTranscript(e.results[0][0].transcript); };
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed') { setShowFallback(true); setStatus('idle'); }
+      else { setResponse('Mic access blocked. Neeche type karein.'); setStatus('responding'); }
     };
     rec.onend = () => {
-      // onend fires after onresult too — only reset if we never got a transcript
-      if (useVoiceStore.getState().status === 'listening') {
-        setStatus('idle');
-      }
+      if (useVoiceStore.getState().status === 'listening') setStatus('idle');
     };
     rec.start();
     setStatus('listening');
     setTranscript(null);
     setResponse(null);
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  const stopWebSpeech = () => {
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    setStatus('idle');
-    setTranscript(null);
+  // ── Native: expo-av audio recording ─────────────────────────────────────────
+  const startNativeRecording = async () => {
+    try {
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) { setShowFallback(true); return; }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(RECORDING_OPTIONS);
+      nativeRecRef.current = recording;
+      setStatus('listening');
+      setTranscript(null);
+      setResponse(null);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {
+      setShowFallback(true);
+    }
   };
 
+  const stopNativeRecording = async () => {
+    const recording = nativeRecRef.current;
+    if (!recording) return;
+    nativeRecRef.current = null;
+
+    try {
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      const uri = recording.getURI();
+      if (!uri) throw new Error('no uri');
+
+      setStatus('processing');
+      Haptics.selectionAsync();
+
+      const isWav = uri.endsWith('.wav');
+      const formData = new FormData();
+      formData.append('audio', {
+        uri,
+        type: isWav ? 'audio/wav' : 'audio/m4a',
+        name: isWav ? 'recording.wav' : 'recording.m4a',
+      } as any);
+      formData.append('language', language);
+
+      const res = await apiFetch(`${API.voice()}/process`, {
+        method: 'POST',
+        body: formData,
+      }, 10000);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.transcript) setTranscript(data.transcript);
+        if (data.response_text) {
+          setResponse(data.response_text);
+          setStatus('responding');
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          return;
+        }
+        // If we got a transcript but no response_text, run through coach
+        if (data.transcript) {
+          await processTranscript(data.transcript);
+          return;
+        }
+      }
+    } catch {}
+
+    setResponse('Audio bhejna nahi hua. Neeche type karein.');
+    setStatus('responding');
+    setShowFallback(true);
+  };
+
+  // ── Mic button handler ────────────────────────────────────────────────────────
   const handleMicPress = () => {
     if (status === 'idle' || status === 'responding') {
+      setShowFallback(false);
       if (Platform.OS === 'web') {
         startWebSpeech();
       } else {
-        // Native: no speech-to-text package — use fallback text input
-        setUseFallback(true);
-        setStatus('idle');
+        startNativeRecording();
       }
     } else if (status === 'listening') {
-      stopWebSpeech();
+      if (Platform.OS === 'web') {
+        webRecRef.current?.stop();
+        webRecRef.current = null;
+        setStatus('idle');
+      } else {
+        stopNativeRecording();
+      }
     }
   };
 
@@ -216,14 +280,13 @@ export default function VoiceScreen() {
     if (!fallbackText.trim()) return;
     processTranscript(fallbackText.trim());
     setFallbackText('');
-    setUseFallback(false);
+    setShowFallback(false);
   };
 
   const handleReset = () => {
-    recognitionRef.current?.abort();
-    recognitionRef.current = null;
-    setUseFallback(false);
-    setFallbackText('');
+    webRecRef.current?.abort(); webRecRef.current = null;
+    nativeRecRef.current?.stopAndUnloadAsync().catch(() => {}); nativeRecRef.current = null;
+    setShowFallback(false); setFallbackText('');
     reset();
   };
 
@@ -232,7 +295,7 @@ export default function VoiceScreen() {
 
   const statusLabels: Record<string, string> = {
     idle: 'Boliye...',
-    listening: 'Sun raha hoon',
+    listening: Platform.OS === 'web' ? 'Sun raha hoon' : 'Recording... Tap to stop',
     processing: 'Samajh raha hoon...',
     responding: 'Jawab taiyaar',
     error: 'Dobara try karein',
@@ -266,7 +329,7 @@ export default function VoiceScreen() {
               <Text style={s.responseTextStyle}>{responseText}</Text>
             </View>
           )}
-          {!transcript && !responseText && !isActive && !useFallback && (
+          {!transcript && !responseText && !isActive && !showFallback && (
             <View style={s.examplesArea}>
               <Text style={s.examplesTitle}>Try saying:</Text>
               {examples.slice(0, 3).map((ex, i) => (
@@ -293,9 +356,10 @@ export default function VoiceScreen() {
             <Animated.View style={[s.ring, { backgroundColor: micColor }, ring1Style]} />
             <Animated.View style={btnStyle}>
               <TouchableOpacity
-                style={[s.micBtn, { backgroundColor: micColor }]}
+                style={[s.micBtn, { backgroundColor: isProcessing ? '#3B3B6E' : micColor }]}
                 onPress={handleMicPress}
                 activeOpacity={0.85}
+                disabled={isProcessing}
               >
                 {isProcessing
                   ? <Feather name="loader" size={36} color="#FFF" />
@@ -314,8 +378,8 @@ export default function VoiceScreen() {
           )}
         </View>
 
-        {/* Fallback text input — shown when mic is blocked */}
-        {useFallback && (
+        {/* Fallback text input */}
+        {showFallback && (
           <View style={s.fallbackWrap}>
             <View style={s.fallbackCard}>
               <TextInput
@@ -336,13 +400,13 @@ export default function VoiceScreen() {
                 <Feather name="arrow-up" size={18} color={fallbackText.trim() ? '#080812' : '#3A3A5A'} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => setUseFallback(false)} style={s.dismissBtn}>
+            <TouchableOpacity onPress={() => setShowFallback(false)} style={s.dismissBtn}>
               <Text style={s.dismissText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Example chips */}
+        {/* Example chips — tap to run through real pipeline */}
         <View style={[s.chipsArea, { paddingBottom: bottomPad + 24 }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipsScroll}>
             {examples.map((ex, i) => (
@@ -361,80 +425,59 @@ export default function VoiceScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#080812' },
-
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingBottom: 16,
   },
   headerTitle: { color: '#EEF2FF', fontSize: 28, fontWeight: '700', fontFamily: 'Inter_700Bold', letterSpacing: -0.5 },
   langPill: {
-    backgroundColor: '#14142A', borderRadius: 20,
-    borderWidth: 1, borderColor: '#1E2040',
+    backgroundColor: '#14142A', borderRadius: 20, borderWidth: 1, borderColor: '#1E2040',
     paddingHorizontal: 14, paddingVertical: 7,
   },
   langText: { color: '#8B8BAD', fontSize: 13, fontFamily: 'Inter_500Medium' },
-
   body: { flex: 1, flexDirection: 'column' },
-
   responseArea: { flex: 1, paddingHorizontal: 24, justifyContent: 'center', gap: 12 },
-
   transcriptBubble: {
     backgroundColor: '#14142A', borderRadius: 16, borderWidth: 1, borderColor: '#1E2040',
     padding: 16, flexDirection: 'row', gap: 10, alignSelf: 'flex-end', maxWidth: '85%',
   },
-  tBadge: {
-    width: 24, height: 24, borderRadius: 12, backgroundColor: '#1E2040',
-    justifyContent: 'center', alignItems: 'center',
-  },
+  tBadge: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#1E2040', justifyContent: 'center', alignItems: 'center' },
   transcriptText: { color: '#C8D0F0', fontSize: 15, lineHeight: 22, flex: 1, fontFamily: 'Inter_400Regular' },
-
   responseBubble: {
     backgroundColor: '#0F0F1E', borderRadius: 16, borderWidth: 1, borderColor: '#1E2040',
     padding: 16, flexDirection: 'row', gap: 10, alignSelf: 'flex-start', maxWidth: '90%',
   },
-  rBadge: {
-    width: 24, height: 24, borderRadius: 12, backgroundColor: '#13133A',
-    justifyContent: 'center', alignItems: 'center',
-  },
+  rBadge: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#13133A', justifyContent: 'center', alignItems: 'center' },
   responseTextStyle: { color: '#EEF2FF', fontSize: 15, lineHeight: 23, flex: 1, fontFamily: 'Inter_400Regular' },
-
   examplesArea: { alignItems: 'center', gap: 10 },
   examplesTitle: { color: '#5A5A7A', fontSize: 13, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 },
   exampleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   exampleText: { color: '#4A4A6A', fontSize: 15, fontStyle: 'italic', fontFamily: 'Inter_400Regular' },
-
   micArea: { alignItems: 'center', paddingVertical: 20, gap: 16 },
-
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 56, paddingHorizontal: 8 },
   waveBar: { width: 4, borderRadius: 3, minHeight: 4 },
-
   ringContainer: { width: 130, height: 130, alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', width: 130, height: 130, borderRadius: 65 },
   micBtn: {
-    width: 130, height: 130, borderRadius: 65,
-    justifyContent: 'center', alignItems: 'center',
+    width: 130, height: 130, borderRadius: 65, justifyContent: 'center', alignItems: 'center',
     shadowColor: '#6366F1', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 24, elevation: 12,
   },
-
   statusText: { color: '#8B8BAD', fontSize: 15, fontFamily: 'Inter_400Regular' },
   resetBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
   resetText: { color: '#8B8BAD', fontSize: 13, fontFamily: 'Inter_400Regular' },
-
   fallbackWrap: { paddingHorizontal: 20, paddingBottom: 8, gap: 8 },
   fallbackCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0F0F1E', borderRadius: 18,
-    borderWidth: 1, borderColor: '#1E2040',
+    backgroundColor: '#0F0F1E', borderRadius: 18, borderWidth: 1, borderColor: '#1E2040',
     paddingHorizontal: 16, paddingVertical: 10, gap: 10,
   },
   fallbackInput: {
-    flex: 1, color: '#EEF2FF', fontSize: 15,
-    fontFamily: 'Inter_400Regular', paddingVertical: 4,
+    flex: 1, color: '#EEF2FF', fontSize: 15, fontFamily: 'Inter_400Regular', paddingVertical: 4,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },
   fallbackSend: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: '#1E2040', justifyContent: 'center', alignItems: 'center',
+    width: 34, height: 34, borderRadius: 17, backgroundColor: '#1E2040',
+    justifyContent: 'center', alignItems: 'center',
   },
   fallbackSendActive: {
     backgroundColor: '#EEF2FF',
@@ -442,13 +485,11 @@ const s = StyleSheet.create({
   },
   dismissBtn: { alignSelf: 'center', paddingVertical: 6 },
   dismissText: { color: '#5A5A7A', fontSize: 13 },
-
   chipsArea: { paddingTop: 4 },
   chipsScroll: { paddingHorizontal: 20, gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#0F0F1E', borderRadius: 20,
-    borderWidth: 1, borderColor: '#1E2040',
+    backgroundColor: '#0F0F1E', borderRadius: 20, borderWidth: 1, borderColor: '#1E2040',
     paddingHorizontal: 14, paddingVertical: 10,
   },
   chipText: { color: '#6870A0', fontSize: 13, fontFamily: 'Inter_400Regular' },

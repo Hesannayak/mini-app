@@ -25,6 +25,8 @@ class SarvamASR:
         self,
         audio_bytes: bytes,
         language_hint: Optional[str] = None,
+        content_type: str = "audio/wav",
+        filename: str = "audio.wav",
     ) -> dict:
         """
         Transcribe audio using Sarvam AI Saaras v2.
@@ -41,7 +43,7 @@ class SarvamASR:
         start = time.time()
 
         headers = {"api-subscription-key": self.api_key}
-        files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
+        files = {"file": (filename, audio_bytes, content_type)}
         data = {}
         if language_hint:
             data["language_code"] = language_hint
