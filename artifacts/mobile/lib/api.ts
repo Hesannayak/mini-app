@@ -32,7 +32,7 @@ export const API = {
   score:        () => serviceUrl(3003, '/api/v1/score'),
   budgets:      () => serviceUrl(3003, '/api/v1/budgets'),
   transactions: () => serviceUrl(3003, '/api/v1/transactions'),
-  coach:        () => serviceUrl(5000, '/api/v1/coach'),
+  coach:        () => serviceUrl(6000, '/api/v1/coach'),
 };
 
 /** fetch with a hard timeout (default 5 s). Throws on timeout/abort. */
