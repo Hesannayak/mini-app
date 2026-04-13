@@ -36,6 +36,10 @@ args = "services/payments: Payments Service"
 task = "workflow.run"
 args = "services/coach: Coach Service"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "services/redis: Redis"
+
 [[workflows.workflow]]
 name = "services/voice: Voice Service"
 author = "agent"
@@ -95,6 +99,17 @@ args = "cd services/coach && python3.11 -m uvicorn main:app --host 0.0.0.0 --por
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "services/redis: Redis"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "redis-server --port 6379 --loglevel notice"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -104,12 +119,28 @@ path = "scripts/post-merge.sh"
 timeoutMs = 20000
 
 [[ports]]
+localPort = 3000
+externalPort = 5000
+
+[[ports]]
 localPort = 3001
 externalPort = 3001
 
 [[ports]]
+localPort = 3002
+externalPort = 3002
+
+[[ports]]
 localPort = 3003
 externalPort = 3003
+
+[[ports]]
+localPort = 3004
+externalPort = 4200
+
+[[ports]]
+localPort = 6379
+externalPort = 5173
 
 [[ports]]
 localPort = 8080
@@ -122,3 +153,6 @@ externalPort = 80
 [[ports]]
 localPort = 18115
 externalPort = 3000
+
+[nix]
+channel = "stable-25_05"
