@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { useVoiceStore } from '@/store/voiceStore';
 import { useUserStore, Language } from '@/store/userStore';
+import { useAuthStore } from '@/store/authStore';
 import { VOICE_EXAMPLES } from '@/constants/intents';
 import { API, apiFetch } from '@/lib/api';
 
@@ -57,6 +58,7 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
 export default function VoiceScreen() {
   const { status, transcript, responseText, setStatus, setTranscript, setResponse, reset } = useVoiceStore();
   const { language, setLanguage } = useUserStore();
+  const { phone } = useAuthStore();
   const insets = useSafeAreaInsets();
 
   const examples = VOICE_EXAMPLES[language] || VOICE_EXAMPLES.hi;
@@ -70,10 +72,8 @@ export default function VoiceScreen() {
   const [interimText, setInterimText] = useState('');
   const [recordSecs, setRecordSecs] = useState(0);
   const [convHistory, setConvHistory] = useState<Array<{ user: string; ai: string }>>([]);
-  const [autoRestarting, setAutoRestarting] = useState(false);
   const autoRestartRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resumeListenRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingContextRef = useRef<{ intent: string; entities: Record<string, any> } | null>(null);
   const autoStartFnRef = useRef<() => void>(() => {});
   const isCapturingRef = useRef(false);   // gates whether onresult should process speech
   const userStoppedRef = useRef(false);   // true when user explicitly stopped mic
@@ -141,7 +141,6 @@ export default function VoiceScreen() {
     setTranscript(text);
     setResponse(null);
     setStatus('processing');
-    setAutoRestarting(false);
     if (autoRestartRef.current) { clearTimeout(autoRestartRef.current); autoRestartRef.current = null; }
     if (Platform.OS !== 'web') Haptics.selectionAsync();
 
@@ -154,7 +153,7 @@ export default function VoiceScreen() {
       const res = await apiFetch(`${API.coach()}/voice`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: text, language, user_id: 'demo' }),
+        body: JSON.stringify({ transcript: text, language, user_id: phone ?? 'demo' }),
       }, 10000);
 
       if (res.ok) {
@@ -163,12 +162,6 @@ export default function VoiceScreen() {
           setResponse(data.response_text);
           setStatus('responding');
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-          if (data.action === 'confirm') {
-            pendingContextRef.current = { intent: data.intent, entities: data.entities };
-          } else {
-            pendingContextRef.current = null;
-          }
 
           // Resume listening after a short pause so the response can be read
           // Web: recognition is still running (continuous), just re-open the gate
@@ -187,7 +180,9 @@ export default function VoiceScreen() {
       }
     } catch {}
 
-    setResponse('Samajh nahi aaya. Dobara bolein ya neeche type karein.');
+    setResponse(language === 'en'
+      ? 'Could not understand. Please try again or type below.'
+      : 'Samajh nahi aaya. Dobara bolein ya neeche type karein.');
     setStatus('responding');
   };
 
@@ -391,20 +386,22 @@ export default function VoiceScreen() {
     rec?.stopAndUnloadAsync().catch(() => {});
     Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
     setShowFallback(false); setFallbackText(''); setInterimText(''); setRecordSecs(0);
-    setAutoRestarting(false); setConvHistory([]);
-    pendingContextRef.current = null;
+    setConvHistory([]);
     reset();
   };
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const isEnglish = language === 'en';
   const statusLabels: Record<string, string> = {
-    idle: 'Boliye...',
-    listening: Platform.OS === 'web' ? 'Sun raha hoon...' : `Recording  ${MAX_RECORD_SECS - recordSecs}s`,
-    processing: 'Samajh raha hoon...',
-    responding: 'Jawab taiyaar',
-    error: 'Dobara try karein',
+    idle:       isEnglish ? 'Speak...'            : 'Boliye...',
+    listening:  Platform.OS === 'web'
+                  ? (isEnglish ? 'Listening...' : 'Sun raha hoon...')
+                  : `Recording  ${MAX_RECORD_SECS - recordSecs}s`,
+    processing: isEnglish ? 'Thinking...'         : 'Samajh raha hoon...',
+    responding: isEnglish ? 'Response ready'      : 'Jawab taiyaar',
+    error:      isEnglish ? 'Try again'           : 'Dobara try karein',
   };
 
   return (
@@ -470,14 +467,6 @@ export default function VoiceScreen() {
             <View style={s.responseBubble}>
               <View style={s.rBadge}><Feather name="cpu" size={12} color="#6366F1" /></View>
               <Text style={s.responseTextStyle}>{responseText}</Text>
-            </View>
-          )}
-
-          {/* Auto-restart indicator (native only) */}
-          {autoRestarting && (
-            <View style={s.autoRestartBadge}>
-              <Feather name="mic" size={12} color="#10B981" />
-              <Text style={s.autoRestartText}>Listening in a moment...</Text>
             </View>
           )}
 
