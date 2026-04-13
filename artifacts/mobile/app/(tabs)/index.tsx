@@ -96,21 +96,41 @@ export default function HomeScreen() {
 
     if (Platform.OS !== 'web') Haptics.selectionAsync();
 
+    // Step 1: voice service for intent detection (payment commands)
     try {
       const voiceRes = await fetch(`${API.voice()}/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: msg, language: 'hi' }),
       });
-      const voiceData = await voiceRes.json();
-      if (voiceData.intent === 'send_money' && voiceData.entities?.amount) {
-        setIsLoading(false);
-        handlePayment(voiceData.entities.amount, voiceData.entities.contact_name || 'Unknown');
-        return;
+      if (voiceRes.ok) {
+        const voiceData = await voiceRes.json();
+        if (voiceData.intent === 'send_money' && voiceData.entities?.amount) {
+          setIsLoading(false);
+          handlePayment(voiceData.entities.amount, voiceData.entities.contact_name || 'Unknown');
+          return;
+        }
       }
     } catch {}
 
-    await new Promise(r => setTimeout(r, 900));
+    // Step 2: coach service for real Claude AI response
+    try {
+      const coachRes = await fetch(`${API.coach()}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, language: 'hi', user_id: 'demo' }),
+      });
+      if (coachRes.ok) {
+        const coachData = await coachRes.json();
+        if (coachData.success && coachData.data?.response) {
+          addMessage('assistant', coachData.data.response);
+          setIsLoading(false);
+          return;
+        }
+      }
+    } catch {}
+
+    // Step 3: local fallback only if both services unreachable
     addMessage('assistant', getMockResponse(msg));
     setIsLoading(false);
   };
