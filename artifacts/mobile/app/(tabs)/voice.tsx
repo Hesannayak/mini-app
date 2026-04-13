@@ -159,22 +159,22 @@ export default function VoiceScreen() {
       }, 5000);
       if (res.ok) {
         const data = await res.json();
-        if (data.response_text) {
+        // Only use voice service response for payment/structured intents.
+        // For retry or coach_query, fall through to Claude for real conversation.
+        const isStructuredIntent = data.action === 'confirm' || data.action === 'execute' || data.action === 'cancel';
+        if (data.response_text && isStructuredIntent) {
           setResponse(data.response_text);
           setStatus('responding');
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
           if (data.action === 'confirm') {
-            // Store pending context so next utterance can confirm/cancel
             pendingContextRef.current = { intent: data.intent, entities: data.entities };
           } else {
-            // execute or cancel clears the pending context
             pendingContextRef.current = null;
           }
 
-          // Auto-restart mic if AI needs a reply
-          const needsReply = data.action === 'confirm' || data.action === 'retry';
-          if (needsReply) {
+          // Auto-restart mic for confirmation
+          if (data.action === 'confirm') {
             setAutoRestarting(true);
             autoRestartRef.current = setTimeout(() => {
               setAutoRestarting(false);
@@ -183,10 +183,11 @@ export default function VoiceScreen() {
           }
           return;
         }
+        // action=retry or coach_query → fall through to Claude
       }
     } catch {}
 
-    // Coach service: Claude AI fallback
+    // Coach service: Claude AI — handles all general conversation
     try {
       const res = await apiFetch(`${API.coach()}/message`, {
         method: 'POST',
