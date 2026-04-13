@@ -28,8 +28,9 @@ interface SpeechRecognitionI extends EventTarget {
 
 const LANG_MAP: Record<string, string> = { hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', en: 'en-IN' };
 
-// WAV recording preset for iOS (LinearPCM = native WAV)
+// WAV recording preset for iOS (LinearPCM = native WAV), metering enabled for auto-stop
 const RECORDING_OPTIONS: Audio.RecordingOptions = {
+  isMeteringEnabled: true,
   android: {
     extension: '.m4a',
     outputFormat: Audio.AndroidOutputFormat.MPEG_4,
@@ -52,6 +53,11 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
   web: { mimeType: 'audio/webm', bitsPerSecond: 128000 },
 };
 
+// Silence detection constants
+const SILENCE_THRESHOLD_DB = -35;   // below this = silence
+const SILENCE_DURATION_MS  = 1500;  // silence this long → auto-stop
+const MIN_SPEECH_MS        = 500;   // must have spoken for at least this long
+
 export default function VoiceScreen() {
   const { status, transcript, responseText, setStatus, setTranscript, setResponse, reset } = useVoiceStore();
   const { language } = useUserStore();
@@ -60,6 +66,9 @@ export default function VoiceScreen() {
   const examples = VOICE_EXAMPLES[language] || VOICE_EXAMPLES.hi;
   const webRecRef = useRef<SpeechRecognitionI | null>(null);
   const nativeRecRef = useRef<Audio.Recording | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speechStartedRef = useRef(false);
+  const recordingStoppingRef = useRef(false);
 
   const [fallbackText, setFallbackText] = useState('');
   const [showFallback, setShowFallback] = useState(false);
@@ -184,31 +193,12 @@ export default function VoiceScreen() {
     setResponse(null);
   };
 
-  // ── Native: expo-av audio recording ─────────────────────────────────────────
-  const startNativeRecording = async () => {
-    try {
-      const { granted } = await Audio.requestPermissionsAsync();
-      if (!granted) { setShowFallback(true); return; }
+  // ── Native: expo-av audio recording with auto-stop on silence ────────────────
+  const stopNativeRecording = async (recording: Audio.Recording) => {
+    if (recordingStoppingRef.current) return;
+    recordingStoppingRef.current = true;
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(RECORDING_OPTIONS);
-      nativeRecRef.current = recording;
-      setStatus('listening');
-      setTranscript(null);
-      setResponse(null);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch {
-      setShowFallback(true);
-    }
-  };
-
-  const stopNativeRecording = async () => {
-    const recording = nativeRecRef.current;
-    if (!recording) return;
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
     nativeRecRef.current = null;
 
     try {
@@ -232,7 +222,7 @@ export default function VoiceScreen() {
       const res = await apiFetch(`${API.voice()}/process`, {
         method: 'POST',
         body: formData,
-      }, 10000);
+      }, 12000);
 
       if (res.ok) {
         const data = await res.json();
@@ -241,11 +231,12 @@ export default function VoiceScreen() {
           setResponse(data.response_text);
           setStatus('responding');
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          recordingStoppingRef.current = false;
           return;
         }
-        // If we got a transcript but no response_text, run through coach
         if (data.transcript) {
           await processTranscript(data.transcript);
+          recordingStoppingRef.current = false;
           return;
         }
       }
@@ -254,6 +245,57 @@ export default function VoiceScreen() {
     setResponse('Audio bhejna nahi hua. Neeche type karein.');
     setStatus('responding');
     setShowFallback(true);
+    recordingStoppingRef.current = false;
+  };
+
+  const startNativeRecording = async () => {
+    try {
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) { setShowFallback(true); return; }
+
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+
+      speechStartedRef.current = false;
+      recordingStoppingRef.current = false;
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
+      const { recording } = await Audio.Recording.createAsync(
+        RECORDING_OPTIONS,
+        (status) => {
+          if (!status.isRecording) return;
+          const db = status.metering ?? -160;
+          const isSpeaking = db > SILENCE_THRESHOLD_DB;
+
+          if (isSpeaking) {
+            // User is talking — clear any pending silence timer
+            speechStartedRef.current = true;
+            if (silenceTimerRef.current) {
+              clearTimeout(silenceTimerRef.current);
+              silenceTimerRef.current = null;
+            }
+          } else if (speechStartedRef.current && !silenceTimerRef.current) {
+            // Silence after speech — start auto-stop timer
+            silenceTimerRef.current = setTimeout(() => {
+              const rec = nativeRecRef.current;
+              if (rec) stopNativeRecording(rec);
+            }, SILENCE_DURATION_MS);
+          } else if (!speechStartedRef.current && (status.durationMillis ?? 0) > 5000) {
+            // No speech at all for 5 s — give up
+            const rec = nativeRecRef.current;
+            if (rec) { setResponse('Awaaz nahi suni. Dobara try karein.'); stopNativeRecording(rec); }
+          }
+        },
+        100, // poll every 100 ms
+      );
+
+      nativeRecRef.current = recording;
+      setStatus('listening');
+      setTranscript(null);
+      setResponse(null);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {
+      setShowFallback(true);
+    }
   };
 
   // ── Mic button handler ────────────────────────────────────────────────────────
@@ -271,7 +313,8 @@ export default function VoiceScreen() {
         webRecRef.current = null;
         setStatus('idle');
       } else {
-        stopNativeRecording();
+        const rec = nativeRecRef.current;
+        if (rec) stopNativeRecording(rec);
       }
     }
   };
@@ -285,7 +328,13 @@ export default function VoiceScreen() {
 
   const handleReset = () => {
     webRecRef.current?.abort(); webRecRef.current = null;
-    nativeRecRef.current?.stopAndUnloadAsync().catch(() => {}); nativeRecRef.current = null;
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    const rec = nativeRecRef.current;
+    nativeRecRef.current = null;
+    recordingStoppingRef.current = false;
+    speechStartedRef.current = false;
+    rec?.stopAndUnloadAsync().catch(() => {});
+    Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
     setShowFallback(false); setFallbackText('');
     reset();
   };
@@ -295,7 +344,7 @@ export default function VoiceScreen() {
 
   const statusLabels: Record<string, string> = {
     idle: 'Boliye...',
-    listening: Platform.OS === 'web' ? 'Sun raha hoon' : 'Recording... Tap to stop',
+    listening: 'Sun raha hoon — ruko mat, boliye',
     processing: 'Samajh raha hoon...',
     responding: 'Jawab taiyaar',
     error: 'Dobara try karein',
