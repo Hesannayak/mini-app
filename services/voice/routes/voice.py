@@ -15,6 +15,7 @@ router = APIRouter()
 class TextInput(BaseModel):
     text: str
     language: Optional[str] = None
+    pending_context: Optional[dict] = None   # carries intent + entities from previous confirm step
 
 
 class VoiceResponse(BaseModel):
@@ -23,7 +24,7 @@ class VoiceResponse(BaseModel):
     confidence: float
     language: str
     entities: dict
-    action: str  # "execute" | "confirm" | "retry"
+    action: str          # "execute" | "confirm" | "retry" | "cancel"
     response_text: str
     latency_ms: int
 
@@ -49,5 +50,9 @@ async def process_voice(
 @router.post("/text", response_model=VoiceResponse)
 async def process_text_input(body: TextInput):
     """Process text input through the voice pipeline (skip ASR)."""
-    result = await process_text(body.text, user_language=body.language)
+    result = await process_text(
+        body.text,
+        user_language=body.language,
+        pending_context=body.pending_context,
+    )
     return result

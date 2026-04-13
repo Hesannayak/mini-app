@@ -72,6 +72,7 @@ export default function VoiceScreen() {
   const [convHistory, setConvHistory] = useState<Array<{ user: string; ai: string }>>([]);
   const [autoRestarting, setAutoRestarting] = useState(false);
   const autoRestartRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingContextRef = useRef<{ intent: string; entities: Record<string, any> } | null>(null);
   const autoStartFnRef = useRef<() => void>(() => {});
   const scrollRef = useRef<ScrollView>(null);
 
@@ -145,11 +146,16 @@ export default function VoiceScreen() {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
 
     // Voice service: intent + payment detection
+    // Pass pending_context so confirmation words resolve correctly
     try {
       const res = await apiFetch(`${API.voice()}/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, language }),
+        body: JSON.stringify({
+          text,
+          language,
+          pending_context: pendingContextRef.current ?? undefined,
+        }),
       }, 5000);
       if (res.ok) {
         const data = await res.json();
@@ -158,7 +164,15 @@ export default function VoiceScreen() {
           setStatus('responding');
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-          // Auto-restart mic if AI needs confirmation or is retrying
+          if (data.action === 'confirm') {
+            // Store pending context so next utterance can confirm/cancel
+            pendingContextRef.current = { intent: data.intent, entities: data.entities };
+          } else {
+            // execute or cancel clears the pending context
+            pendingContextRef.current = null;
+          }
+
+          // Auto-restart mic if AI needs a reply
           const needsReply = data.action === 'confirm' || data.action === 'retry';
           if (needsReply) {
             setAutoRestarting(true);
@@ -352,6 +366,7 @@ export default function VoiceScreen() {
     Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
     setShowFallback(false); setFallbackText(''); setInterimText(''); setRecordSecs(0);
     setAutoRestarting(false); setConvHistory([]);
+    pendingContextRef.current = null;
     reset();
   };
 

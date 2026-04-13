@@ -6,7 +6,7 @@ Voice pipeline orchestrator.
 import time
 from typing import Optional
 from nlp.intent_classifier import classify_intent
-from nlp.entity_extractor import extract_entities
+from nlp.entity_extractor import extract_entities, is_confirmation, is_rejection
 from nlp.language_detector import detect_language
 from asr.sarvam import asr_engine
 
@@ -61,17 +61,45 @@ SUCCESS_TEMPLATES = {
     },
 }
 
+EXECUTE_TEMPLATES = {
+    "send_money": {
+        "hi": "₹{amount} {contact} ko bhej diya gaya! ✓",
+        "en": "₹{amount} sent to {contact} successfully! ✓",
+        "ta": "₹{amount} {contact}க்கு அனுப்பப்பட்டது! ✓",
+        "te": "₹{amount} {contact}కు పంపబడింది! ✓",
+    },
+    "pay_bill": {
+        "hi": "{bill_type} bill ₹{amount} bhar diya gaya! ✓",
+        "en": "{bill_type} bill of ₹{amount} paid! ✓",
+        "ta": "{bill_type} பில் ₹{amount} கட்டப்பட்டது! ✓",
+        "te": "{bill_type} బిల్లు ₹{amount} చెల్లించబడింది! ✓",
+    },
+    "request_money": {
+        "hi": "{contact} ko ₹{amount} ki request bhej di! ✓",
+        "en": "₹{amount} requested from {contact}! ✓",
+        "ta": "{contact}கிடம் ₹{amount} கேட்கப்பட்டது! ✓",
+        "te": "{contact} నుండి ₹{amount} అడగబడింది! ✓",
+    },
+}
+
+CANCEL_MESSAGES = {
+    "hi": "Theek hai, payment cancel kar diya.",
+    "en": "Okay, payment cancelled.",
+    "ta": "சரி, பணம் அனுப்புவது ரத்து செய்யப்பட்டது.",
+    "te": "సరే, చెల్లింపు రద్దు చేయబడింది.",
+}
+
 
 async def process_audio(
     audio_bytes: bytes,
     user_language: Optional[str] = None,
     content_type: str = "audio/wav",
     filename: str = "audio.wav",
+    pending_context: Optional[dict] = None,
 ) -> dict:
     """Process audio through the full 7-step voice pipeline."""
     start_time = time.time()
 
-    # Step 1-2: Audio → ASR → transcript
     asr_result = await asr_engine.transcribe(
         audio_bytes,
         language_hint=user_language,
@@ -81,18 +109,59 @@ async def process_audio(
     transcript = asr_result["transcript"]
     language = asr_result.get("language", user_language or "hi")
 
-    return await _process_transcript(transcript, language, start_time)
+    return await _process_transcript(transcript, language, start_time, pending_context)
 
 
-async def process_text(text: str, user_language: Optional[str] = None) -> dict:
+async def process_text(
+    text: str,
+    user_language: Optional[str] = None,
+    pending_context: Optional[dict] = None,
+) -> dict:
     """Process text input through the pipeline (skip ASR step)."""
     start_time = time.time()
     language = user_language or detect_language(text)
-    return await _process_transcript(text, language, start_time)
+    return await _process_transcript(text, language, start_time, pending_context)
 
 
-async def _process_transcript(transcript: str, language: str, start_time: float) -> dict:
+async def _process_transcript(
+    transcript: str,
+    language: str,
+    start_time: float,
+    pending_context: Optional[dict] = None,
+) -> dict:
     """Core pipeline logic after transcription."""
+
+    # ── Confirmation / rejection of a pending action ────────────────────────────
+    if pending_context and pending_context.get("intent") and pending_context.get("entities"):
+        pending_intent = pending_context["intent"]
+        pending_entities = pending_context["entities"]
+
+        if is_confirmation(transcript):
+            response_text = _build_execute_text(pending_intent, pending_entities, language)
+            return _build_response(
+                transcript=transcript,
+                intent=pending_intent,
+                confidence=0.99,
+                language=language,
+                entities=pending_entities,
+                action="execute",
+                response_text=response_text,
+                latency_ms=_elapsed(start_time),
+            )
+
+        if is_rejection(transcript):
+            return _build_response(
+                transcript=transcript,
+                intent=pending_intent,
+                confidence=0.99,
+                language=language,
+                entities=pending_entities,
+                action="cancel",
+                response_text=CANCEL_MESSAGES.get(language, CANCEL_MESSAGES["en"]),
+                latency_ms=_elapsed(start_time),
+            )
+
+    # ── Normal pipeline ──────────────────────────────────────────────────────────
 
     # Step 3: Intent classification
     intent, confidence = classify_intent(transcript, language)
@@ -129,7 +198,7 @@ async def _process_transcript(transcript: str, language: str, start_time: float)
 
     # Step 6: Determine action
     if is_payment_intent:
-        # Payments always require confirmation per CLAUDE.md rule #1
+        # Payments always require confirmation
         action = "confirm"
         response_text = _build_confirm_message(intent, entities, language)
     elif confidence >= CONFIDENCE_AUTO_EXECUTE:
@@ -160,15 +229,36 @@ def _build_confirm_message(intent: str, entities: dict, language: str) -> str:
     templates = CONFIRM_TEMPLATES.get(intent, {})
     template = templates.get(language, templates.get("en", "Please confirm this action."))
 
+    contact = entities.get("contact_name", "?")
+    amount = entities.get("amount", "?")
+
     return template.format(
-        contact=entities.get("contact_name", "?"),
-        amount=entities.get("amount", "?"),
+        contact=contact,
+        amount=amount,
         bill_type=entities.get("bill_type", ""),
     )
 
 
+def _build_execute_text(intent: str, entities: dict, language: str) -> str:
+    """Build a success message for a confirmed action."""
+    templates = EXECUTE_TEMPLATES.get(intent, {})
+    template = templates.get(language, templates.get("en", "Done! ✓"))
+
+    contact = entities.get("contact_name", "")
+    amount = entities.get("amount", "")
+
+    try:
+        return template.format(
+            contact=contact,
+            amount=amount,
+            bill_type=entities.get("bill_type", ""),
+        )
+    except KeyError:
+        return template
+
+
 def _build_execute_response(intent: str, entities: dict, language: str) -> str:
-    """Build a response for auto-executed actions."""
+    """Build a response for auto-executed non-payment actions."""
     templates = SUCCESS_TEMPLATES.get(intent, {})
     template = templates.get(language, templates.get("en", "Done."))
 

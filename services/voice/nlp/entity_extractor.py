@@ -30,10 +30,10 @@ BILL_KEYWORDS = {
 
 # Contact alias patterns
 CONTACT_ALIASES = {
-    "maa": ["maa", "mom", "mother", "mummy", "அம்மா", "అమ్మ"],
-    "papa": ["papa", "dad", "father", "daddy", "அப்பா", "నాన్న"],
-    "bhai": ["bhai", "brother", "bhaiya", "அண்ணா", "అన్న"],
-    "didi": ["didi", "sister", "behen", "அக்கா", "అక్క"],
+    "maa": ["maa", "mom", "mother", "mummy", "அம்மா", "అమ్మ", "माँ", "माम"],
+    "papa": ["papa", "dad", "father", "daddy", "அப்பா", "నాన్న", "पापा"],
+    "bhai": ["bhai", "brother", "bhaiya", "அண்ணா", "అన్న", "भाई"],
+    "didi": ["didi", "sister", "behen", "அக்கா", "అక్క", "दीदी"],
 }
 
 # Period keywords
@@ -42,6 +42,46 @@ PERIOD_KEYWORDS = {
     "week": ["hafte", "week", "saptah", "வாரம்", "వారం"],
     "month": ["mahine", "month", "maheena", "மாதம்", "నెల"],
 }
+
+# Confirmation words in all supported languages
+CONFIRMATION_WORDS = {
+    "haan", "han", "ha", "yes", "ok", "okay", "karo", "confirm", "bilkul",
+    "sahi", "theek", "theek hai", "zaroor", "sure", "absolutely",
+    "हां", "हाँ", "हा", "हान", "कंफर्म", "ठीक", "ठीक है", "बिल्कुल",
+    "ज़रूर", "करो", "सही", "हो जाए", "कर दो", "भेज दो",
+    "ஆமா", "சரி", "ஓகே", "అవును", "సరే", "ఓకే",
+}
+
+# Rejection words in all supported languages
+REJECTION_WORDS = {
+    "nahi", "na", "cancel", "band", "rok", "chodo", "no", "nope", "stop",
+    "नहीं", "ना", "कैंसल", "रुको", "छोड़ो", "मत", "नहीं करना",
+    "இல்லை", "வேண்டாம்", "కాదు", "వద్దు",
+}
+
+
+def is_confirmation(text: str) -> bool:
+    """Returns True if the text is a confirmation word/phrase."""
+    t = text.lower().strip()
+    # Direct match in set
+    if t in CONFIRMATION_WORDS:
+        return True
+    # Partial match for short phrases
+    for word in CONFIRMATION_WORDS:
+        if word in t and len(t) < 20:
+            return True
+    return False
+
+
+def is_rejection(text: str) -> bool:
+    """Returns True if the text is a rejection word/phrase."""
+    t = text.lower().strip()
+    if t in REJECTION_WORDS:
+        return True
+    for word in REJECTION_WORDS:
+        if word in t and len(t) < 20:
+            return True
+    return False
 
 
 def extract_entities(transcript: str, intent: str, language: str = "hi") -> Dict[str, Any]:
@@ -57,7 +97,7 @@ def extract_entities(transcript: str, intent: str, language: str = "hi") -> Dict
         entities["amount"] = amount
 
     # Extract contact/recipient name
-    contact = _extract_contact(text)
+    contact = _extract_contact(transcript)  # pass original (not lowercased) for Devanagari
     if contact:
         entities["contact_name"] = contact
 
@@ -91,7 +131,7 @@ def extract_entities(transcript: str, intent: str, language: str = "hi") -> Dict
 def _extract_amount(text: str) -> float | None:
     """Extract monetary amount from text."""
     # Match digits with optional comma formatting: 1,500 or 1500
-    digit_match = re.search(r'(?:₹|rs\.?|rupees?|rupaye?)?\s*(\d[\d,]*\.?\d*)', text, re.IGNORECASE)
+    digit_match = re.search(r'(?:₹|rs\.?|rupees?|rupaye?|रुपी|रुपीस|रुपए|rupi|rupis)?\s*(\d[\d,]*\.?\d*)', text, re.IGNORECASE)
     if digit_match:
         amount_str = digit_match.group(1).replace(',', '')
         try:
@@ -112,34 +152,81 @@ def _extract_amount(text: str) -> float | None:
     return None
 
 
-def _extract_contact(text: str) -> str | None:
-    """Extract contact name or alias."""
-    # Check known aliases
+def _extract_contact(transcript: str) -> str | None:
+    """Extract contact name or alias from original-case transcript."""
+    text_lower = transcript.lower().strip()
+
+    # Check known aliases first (case-insensitive)
     for alias, keywords in CONTACT_ALIASES.items():
         for kw in keywords:
-            if kw in text.split() or kw in text:
+            if kw in text_lower.split() or kw in text_lower:
                 return alias
 
-    # Extract name after "ko" (Hindi dative marker: "Rahul ko bhej do")
-    ko_match = re.search(r'(\w+)\s+ko\s+', text, re.IGNORECASE)
+    # ── Romanised Hindi patterns ────────────────────────────────────────────────
+
+    # "Rahul ko 500 bhej do" — name before romanised "ko"
+    ko_match = re.search(r'(\w+)\s+ko\s+', transcript, re.IGNORECASE)
     if ko_match:
         name = ko_match.group(1)
-        if name not in {"kitna", "kya", "kaise", "kab", "mujhe", "mujhko"}:
+        if name.lower() not in {"kitna", "kya", "kaise", "kab", "mujhe", "mujhko", "use"}:
             return name
 
-    # Extract name after "to" in English
-    to_match = re.search(r'(?:send|transfer|pay)\s+(?:money\s+)?(?:to\s+)?(\w+)', text, re.IGNORECASE)
+    # "send 500 to Rahul" / "transfer money to Rahul"
+    to_match = re.search(r'(?:send|transfer|pay)\s+(?:\w+\s+)*?to\s+(\w+)', transcript, re.IGNORECASE)
     if to_match:
         name = to_match.group(1)
-        if name not in {"the", "my", "a", "an", "for"}:
+        if name.lower() not in {"the", "my", "a", "an", "for"}:
             return name
 
-    # Extract name before "se" (Hindi: "Rahul se maango")
-    se_match = re.search(r'(\w+)\s+se\s+', text, re.IGNORECASE)
+    # "Rahul se maango"
+    se_match = re.search(r'(\w+)\s+se\s+', transcript, re.IGNORECASE)
     if se_match:
         name = se_match.group(1)
-        if name not in {"is", "us", "ek", "kisi"}:
+        if name.lower() not in {"is", "us", "ek", "kisi"}:
             return name
+
+    # ── Devanagari / Sarvam ASR patterns ───────────────────────────────────────
+
+    # "मार्क को 500" — Devanagari "को"
+    deva_ko = re.search(r'(\S+)\s+को\s+', transcript)
+    if deva_ko:
+        name = deva_ko.group(1)
+        if name not in {"मुझे", "उसे", "इसे", "कितना", "क्या"}:
+            return name
+
+    # "मार्क ऑफ़ 500" — Sarvam often transcribes "को" as "ऑफ़" or "of"
+    deva_of = re.search(r'(\S+)\s+(?:ऑफ़?|ऑफ)\s+', transcript)
+    if deva_of:
+        name = deva_of.group(1)
+        return name
+
+    # "मार्क के लिए 500"
+    deva_ke = re.search(r'(\S+)\s+के\s+लिए\s+', transcript)
+    if deva_ke:
+        return deva_ke.group(1)
+
+    # "send to मार्क" (mixed script)
+    mixed_to = re.search(r'(?:send|bhej|transfer)\s+(?:\S+\s+)?(?:to\s+)?(\S+)', transcript, re.IGNORECASE)
+    if mixed_to:
+        candidate = mixed_to.group(1)
+        # Must not be a number or common word
+        if not re.match(r'^\d', candidate) and candidate.lower() not in {
+            "ko", "को", "do", "dena", "de", "₹", "rs", "rupee", "rupees",
+            "money", "paisa", "500", "100", "bhej"
+        }:
+            return candidate
+
+    # Last resort: first word of the utterance if it looks like a name
+    # (starts with uppercase in romanised, or is a Devanagari word before a number)
+    first_word_before_num = re.match(r'^(\S+)\s+(?:\S+\s+)?(?:₹|\d)', transcript)
+    if first_word_before_num:
+        candidate = first_word_before_num.group(1)
+        # Avoid picking up verbs or common Hindi words
+        if candidate.lower() not in {
+            "mujhe", "aap", "us", "ek", "do", "teen", "aaj", "kal",
+            "kitna", "kya", "kab", "kaise", "please", "zara",
+        }:
+            return candidate
 
     return None
 
