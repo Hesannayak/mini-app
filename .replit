@@ -92,12 +92,13 @@ outputType = "console"
 name = "services/coach: Coach Service"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd services/coach && python3.11 -m uvicorn main:app --host 0.0.0.0 --port 3004 --reload"
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd services/coach && python3.11 -m uvicorn main:app --host 0.0.0.0 --port 5000 --reload"
+waitForPort = 5000
 
 [[workflows.workflow]]
 name = "services/redis: Redis"
@@ -137,6 +138,10 @@ externalPort = 3003
 [[ports]]
 localPort = 3004
 externalPort = 4200
+
+[[ports]]
+localPort = 5000
+externalPort = 6000
 
 [[ports]]
 localPort = 6379

@@ -10,8 +10,7 @@ const isReplit = replitDomain?.includes('.replit.dev') || replitDomain?.includes
 
 function serviceUrl(port: number, path: string): string {
   if (isWeb && isReplit) {
-    const proto = 'https';
-    return `${proto}://${replitDomain?.replace(/:\d+$/, '')}:${port}${path}`;
+    return `https://${replitDomain?.replace(/:\d+$/, '')}:${port}${path}`;
   }
   return `http://localhost:${port}${path}`;
 }
@@ -21,8 +20,19 @@ export const API = {
   payments:     () => serviceUrl(3001, '/api/v1/payments'),
   voice:        () => serviceUrl(3002, '/api/v1/voice'),
   intelligence: () => serviceUrl(3003, '/api/v1/intelligence'),
-  coach:        () => serviceUrl(3004, '/api/v1/coach'),
   score:        () => serviceUrl(3003, '/api/v1/score'),
   budgets:      () => serviceUrl(3003, '/api/v1/budgets'),
   transactions: () => serviceUrl(3003, '/api/v1/transactions'),
+  coach:        () => serviceUrl(5000, '/api/v1/coach'),   // port 5000 — Replit-exposed
 };
+
+/** fetch with a hard timeout (default 5 s). Throws on timeout. */
+export async function apiFetch(url: string, init: RequestInit = {}, timeoutMs = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}

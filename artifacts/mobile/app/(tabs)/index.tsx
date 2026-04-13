@@ -10,7 +10,7 @@ import MiniLogo from '@/components/MiniLogo';
 import PinInput from '@/components/PinInput';
 import { useUserStore } from '@/store/userStore';
 import { checkPaymentAuth } from '@/utils/paymentRules';
-import { API } from '@/lib/api';
+import { API, apiFetch } from '@/lib/api';
 
 const MOCK_RESPONSES: Record<string, string> = {
   balance: 'Aapke account mein ₹42,350 hain. Savings account mein ₹18,600 aur current mein ₹23,750.',
@@ -96,13 +96,13 @@ export default function HomeScreen() {
 
     if (Platform.OS !== 'web') Haptics.selectionAsync();
 
-    // Step 1: voice service for intent detection (payment commands)
+    // Step 1: voice service — detect payment intents (3 s timeout)
     try {
-      const voiceRes = await fetch(`${API.voice()}/text`, {
+      const voiceRes = await apiFetch(`${API.voice()}/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: msg, language: 'hi' }),
-      });
+      }, 3000);
       if (voiceRes.ok) {
         const voiceData = await voiceRes.json();
         if (voiceData.intent === 'send_money' && voiceData.entities?.amount) {
@@ -113,13 +113,13 @@ export default function HomeScreen() {
       }
     } catch {}
 
-    // Step 2: coach service for real Claude AI response
+    // Step 2: coach service — real Claude AI response (8 s timeout)
     try {
-      const coachRes = await fetch(`${API.coach()}/message`, {
+      const coachRes = await apiFetch(`${API.coach()}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg, language: 'hi', user_id: 'demo' }),
-      });
+      }, 8000);
       if (coachRes.ok) {
         const coachData = await coachRes.json();
         if (coachData.success && coachData.data?.response) {
@@ -130,7 +130,7 @@ export default function HomeScreen() {
       }
     } catch {}
 
-    // Step 3: local fallback only if both services unreachable
+    // Step 3: fallback — only if both services unreachable
     addMessage('assistant', getMockResponse(msg));
     setIsLoading(false);
   };
