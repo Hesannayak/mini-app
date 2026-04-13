@@ -53,10 +53,6 @@ const RECORDING_OPTIONS: Audio.RecordingOptions = {
   web: { mimeType: 'audio/webm', bitsPerSecond: 128000 },
 };
 
-// Silence detection constants
-const SILENCE_THRESHOLD_DB = -35;   // below this = silence
-const SILENCE_DURATION_MS  = 1500;  // silence this long → auto-stop
-const MIN_SPEECH_MS        = 500;   // must have spoken for at least this long
 
 export default function VoiceScreen() {
   const { status, transcript, responseText, setStatus, setTranscript, setResponse, reset } = useVoiceStore();
@@ -71,8 +67,13 @@ export default function VoiceScreen() {
 
   const [fallbackText, setFallbackText] = useState('');
   const [showFallback, setShowFallback] = useState(false);
-  const [interimText, setInterimText] = useState('');      // real-time for web
-  const [recordSecs, setRecordSecs] = useState(0);         // countdown for native
+  const [interimText, setInterimText] = useState('');
+  const [recordSecs, setRecordSecs] = useState(0);
+  const [convHistory, setConvHistory] = useState<Array<{ user: string; ai: string }>>([]);
+  const [autoRestarting, setAutoRestarting] = useState(false);
+  const autoRestartRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoStartFnRef = useRef<() => void>(() => {});
+  const scrollRef = useRef<ScrollView>(null);
 
   const MAX_RECORD_SECS = 8;
 
@@ -127,11 +128,23 @@ export default function VoiceScreen() {
 
   // ── Core: process any text through voice → coach pipeline ────────────────────
   const processTranscript = async (text: string) => {
+    // Archive the previous exchange to history BEFORE overwriting it
+    const prev = useVoiceStore.getState();
+    if (prev.transcript && prev.responseText) {
+      setConvHistory(h => [...h, { user: prev.transcript!, ai: prev.responseText! }]);
+    }
+
     setTranscript(text);
+    setResponse(null);
     setStatus('processing');
+    setAutoRestarting(false);
+    if (autoRestartRef.current) { clearTimeout(autoRestartRef.current); autoRestartRef.current = null; }
     if (Platform.OS !== 'web') Haptics.selectionAsync();
 
-    // Voice service: intent detection
+    // Auto-scroll to bottom
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+    // Voice service: intent + payment detection
     try {
       const res = await apiFetch(`${API.voice()}/text`, {
         method: 'POST',
@@ -144,6 +157,16 @@ export default function VoiceScreen() {
           setResponse(data.response_text);
           setStatus('responding');
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+          // Auto-restart mic if AI needs confirmation or is retrying
+          const needsReply = data.action === 'confirm' || data.action === 'retry';
+          if (needsReply) {
+            setAutoRestarting(true);
+            autoRestartRef.current = setTimeout(() => {
+              setAutoRestarting(false);
+              autoStartFnRef.current();
+            }, 1800);
+          }
           return;
         }
       }
@@ -203,9 +226,8 @@ export default function VoiceScreen() {
     };
     rec.start();
     setStatus('listening');
-    setTranscript(null);
-    setResponse(null);
     setInterimText('');
+    setRecordSecs(0);
   };
 
   // ── Native: stop recording, upload audio, process ────────────────────────────
@@ -241,15 +263,9 @@ export default function VoiceScreen() {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.transcript) setTranscript(data.transcript);
-        if (data.response_text) {
-          setResponse(data.response_text);
-          setStatus('responding');
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          recordingStoppingRef.current = false;
-          return;
-        }
         if (data.transcript) {
+          // Always route through processTranscript so history is archived
+          // and auto-restart logic fires when action='confirm'/'retry'
           await processTranscript(data.transcript);
           recordingStoppingRef.current = false;
           return;
@@ -276,8 +292,6 @@ export default function VoiceScreen() {
       nativeRecRef.current = recording;
       setStatus('listening');
       setRecordSecs(0);
-      setTranscript(null);
-      setResponse(null);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       // Countdown timer — auto-stop when MAX_RECORD_SECS reached
@@ -295,6 +309,9 @@ export default function VoiceScreen() {
       setShowFallback(true);
     }
   };
+
+  // Wire up auto-restart ref (updated each render so closure is always fresh)
+  autoStartFnRef.current = Platform.OS === 'web' ? startWebSpeech : startNativeRecording;
 
   // ── Mic button handler ────────────────────────────────────────────────────────
   const handleMicPress = () => {
@@ -327,12 +344,14 @@ export default function VoiceScreen() {
   const handleReset = () => {
     webRecRef.current?.abort(); webRecRef.current = null;
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
+    if (autoRestartRef.current) { clearTimeout(autoRestartRef.current); autoRestartRef.current = null; }
     const rec = nativeRecRef.current;
     nativeRecRef.current = null;
     recordingStoppingRef.current = false;
     rec?.stopAndUnloadAsync().catch(() => {});
     Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
     setShowFallback(false); setFallbackText(''); setInterimText(''); setRecordSecs(0);
+    setAutoRestarting(false); setConvHistory([]);
     reset();
   };
 
@@ -361,8 +380,50 @@ export default function VoiceScreen() {
       </View>
 
       <View style={s.body}>
-        {/* Response / transcript area */}
-        <View style={s.responseArea}>
+        {/* Conversation scroll area */}
+        <ScrollView
+          ref={scrollRef}
+          style={s.scrollArea}
+          contentContainerStyle={s.scrollContent}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        >
+          {/* History — previous exchanges in this session */}
+          {convHistory.map((turn, i) => (
+            <View key={i} style={s.historyTurn}>
+              <View style={[s.transcriptBubble, s.historyBubble]}>
+                <View style={s.tBadge}><Feather name="user" size={12} color="#5A5A7A" /></View>
+                <Text style={[s.transcriptText, s.historyText]}>{turn.user}</Text>
+              </View>
+              <View style={[s.responseBubble, s.historyBubble]}>
+                <View style={s.rBadge}><Feather name="cpu" size={12} color="#4A4A6E" /></View>
+                <Text style={[s.responseTextStyle, s.historyText]}>{turn.ai}</Text>
+              </View>
+            </View>
+          ))}
+
+          {/* Current turn */}
+          {transcript && (
+            <View style={s.transcriptBubble}>
+              <View style={s.tBadge}><Feather name="user" size={12} color="#8B8BAD" /></View>
+              <Text style={s.transcriptText}>{transcript}</Text>
+            </View>
+          )}
+          {responseText && (
+            <View style={s.responseBubble}>
+              <View style={s.rBadge}><Feather name="cpu" size={12} color="#6366F1" /></View>
+              <Text style={s.responseTextStyle}>{responseText}</Text>
+            </View>
+          )}
+
+          {/* Auto-restart indicator */}
+          {autoRestarting && (
+            <View style={s.autoRestartBadge}>
+              <Feather name="mic" size={12} color="#10B981" />
+              <Text style={s.autoRestartText}>Listening in a moment...</Text>
+            </View>
+          )}
+
           {/* Live interim text while speaking (web) */}
           {isListening && interimText ? (
             <View style={s.interimBubble}>
@@ -379,19 +440,8 @@ export default function VoiceScreen() {
             </View>
           ) : null}
 
-          {transcript && (
-            <View style={s.transcriptBubble}>
-              <View style={s.tBadge}><Feather name="user" size={12} color="#8B8BAD" /></View>
-              <Text style={s.transcriptText}>{transcript}</Text>
-            </View>
-          )}
-          {responseText && (
-            <View style={s.responseBubble}>
-              <View style={s.rBadge}><Feather name="cpu" size={12} color="#6366F1" /></View>
-              <Text style={s.responseTextStyle}>{responseText}</Text>
-            </View>
-          )}
-          {!transcript && !responseText && !isActive && !showFallback && !interimText && (
+          {/* Empty state examples */}
+          {convHistory.length === 0 && !transcript && !responseText && !isActive && !showFallback && !interimText && (
             <View style={s.examplesArea}>
               <Text style={s.examplesTitle}>Try saying:</Text>
               {examples.slice(0, 3).map((ex, i) => (
@@ -402,7 +452,7 @@ export default function VoiceScreen() {
               ))}
             </View>
           )}
-        </View>
+        </ScrollView>
 
         {/* Mic button + rings */}
         <View style={s.micArea}>
@@ -498,7 +548,17 @@ const s = StyleSheet.create({
   },
   langText: { color: '#8B8BAD', fontSize: 13, fontFamily: 'Inter_500Medium' },
   body: { flex: 1, flexDirection: 'column' },
-  responseArea: { flex: 1, paddingHorizontal: 24, justifyContent: 'center', gap: 12 },
+  scrollArea: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 8, gap: 10, justifyContent: 'flex-end' },
+  historyTurn: { gap: 8, opacity: 0.45 },
+  historyBubble: { borderColor: '#16162A' },
+  historyText: { color: '#6A6A9A', fontSize: 14 },
+  autoRestartBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center',
+    backgroundColor: '#0D1F1A', borderRadius: 20, borderWidth: 1, borderColor: '#1A3B30',
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  autoRestartText: { color: '#10B981', fontSize: 12, fontFamily: 'Inter_500Medium' },
   transcriptBubble: {
     backgroundColor: '#14142A', borderRadius: 16, borderWidth: 1, borderColor: '#1E2040',
     padding: 16, flexDirection: 'row', gap: 10, alignSelf: 'flex-end', maxWidth: '85%',
