@@ -66,12 +66,15 @@ export default function VoiceScreen() {
   const examples = VOICE_EXAMPLES[language] || VOICE_EXAMPLES.hi;
   const webRecRef = useRef<SpeechRecognitionI | null>(null);
   const nativeRecRef = useRef<Audio.Recording | null>(null);
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const speechStartedRef = useRef(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingStoppingRef = useRef(false);
 
   const [fallbackText, setFallbackText] = useState('');
   const [showFallback, setShowFallback] = useState(false);
+  const [interimText, setInterimText] = useState('');      // real-time for web
+  const [recordSecs, setRecordSecs] = useState(0);         // countdown for native
+
+  const MAX_RECORD_SECS = 8;
 
   // ── Animations ──────────────────────────────────────────────────────────────
   const r1Scale = useSharedValue(1); const r1Opacity = useSharedValue(0);
@@ -168,37 +171,49 @@ export default function VoiceScreen() {
     setStatus('responding');
   };
 
-  // ── Web: Web Speech API ──────────────────────────────────────────────────────
+  // ── Web: Web Speech API with live interim results ────────────────────────────
   const startWebSpeech = () => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { setShowFallback(true); return; }
     const rec: SpeechRecognitionI = new SR();
     rec.lang = LANG_MAP[language] || 'hi-IN';
     rec.continuous = false;
-    rec.interimResults = false;
+    rec.interimResults = true;   // ← live word-by-word display
     rec.maxAlternatives = 1;
     webRecRef.current = rec;
 
-    rec.onresult = (e) => { processTranscript(e.results[0][0].transcript); };
-    rec.onerror = (e) => {
+    rec.onresult = (e: any) => {
+      let interim = '';
+      let final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      if (interim) setInterimText(interim);
+      if (final) { setInterimText(''); processTranscript(final); }
+    };
+    rec.onerror = (e: any) => {
+      setInterimText('');
       if (e.error === 'not-allowed') { setShowFallback(true); setStatus('idle'); }
       else { setResponse('Mic access blocked. Neeche type karein.'); setStatus('responding'); }
     };
     rec.onend = () => {
+      setInterimText('');
       if (useVoiceStore.getState().status === 'listening') setStatus('idle');
     };
     rec.start();
     setStatus('listening');
     setTranscript(null);
     setResponse(null);
+    setInterimText('');
   };
 
-  // ── Native: expo-av audio recording with auto-stop on silence ────────────────
+  // ── Native: stop recording, upload audio, process ────────────────────────────
   const stopNativeRecording = async (recording: Audio.Recording) => {
     if (recordingStoppingRef.current) return;
     recordingStoppingRef.current = true;
 
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
     nativeRecRef.current = null;
 
     try {
@@ -254,45 +269,28 @@ export default function VoiceScreen() {
       if (!granted) { setShowFallback(true); return; }
 
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-
-      speechStartedRef.current = false;
       recordingStoppingRef.current = false;
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
-      const { recording } = await Audio.Recording.createAsync(
-        RECORDING_OPTIONS,
-        (status) => {
-          if (!status.isRecording) return;
-          const db = status.metering ?? -160;
-          const isSpeaking = db > SILENCE_THRESHOLD_DB;
-
-          if (isSpeaking) {
-            // User is talking — clear any pending silence timer
-            speechStartedRef.current = true;
-            if (silenceTimerRef.current) {
-              clearTimeout(silenceTimerRef.current);
-              silenceTimerRef.current = null;
-            }
-          } else if (speechStartedRef.current && !silenceTimerRef.current) {
-            // Silence after speech — start auto-stop timer
-            silenceTimerRef.current = setTimeout(() => {
-              const rec = nativeRecRef.current;
-              if (rec) stopNativeRecording(rec);
-            }, SILENCE_DURATION_MS);
-          } else if (!speechStartedRef.current && (status.durationMillis ?? 0) > 5000) {
-            // No speech at all for 5 s — give up
-            const rec = nativeRecRef.current;
-            if (rec) { setResponse('Awaaz nahi suni. Dobara try karein.'); stopNativeRecording(rec); }
-          }
-        },
-        100, // poll every 100 ms
-      );
+      const { recording } = await Audio.Recording.createAsync(RECORDING_OPTIONS);
 
       nativeRecRef.current = recording;
       setStatus('listening');
+      setRecordSecs(0);
       setTranscript(null);
       setResponse(null);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Countdown timer — auto-stop when MAX_RECORD_SECS reached
+      let elapsed = 0;
+      countdownRef.current = setInterval(() => {
+        elapsed += 1;
+        setRecordSecs(elapsed);
+        if (elapsed >= MAX_RECORD_SECS) {
+          if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
+          const rec = nativeRecRef.current;
+          if (rec) stopNativeRecording(rec);
+        }
+      }, 1000);
     } catch {
       setShowFallback(true);
     }
@@ -328,14 +326,13 @@ export default function VoiceScreen() {
 
   const handleReset = () => {
     webRecRef.current?.abort(); webRecRef.current = null;
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
     const rec = nativeRecRef.current;
     nativeRecRef.current = null;
     recordingStoppingRef.current = false;
-    speechStartedRef.current = false;
     rec?.stopAndUnloadAsync().catch(() => {});
     Audio.setAudioModeAsync({ allowsRecordingIOS: false }).catch(() => {});
-    setShowFallback(false); setFallbackText('');
+    setShowFallback(false); setFallbackText(''); setInterimText(''); setRecordSecs(0);
     reset();
   };
 
@@ -344,7 +341,7 @@ export default function VoiceScreen() {
 
   const statusLabels: Record<string, string> = {
     idle: 'Boliye...',
-    listening: 'Sun raha hoon — ruko mat, boliye',
+    listening: Platform.OS === 'web' ? 'Sun raha hoon...' : `Recording  ${MAX_RECORD_SECS - recordSecs}s`,
     processing: 'Samajh raha hoon...',
     responding: 'Jawab taiyaar',
     error: 'Dobara try karein',
@@ -366,6 +363,22 @@ export default function VoiceScreen() {
       <View style={s.body}>
         {/* Response / transcript area */}
         <View style={s.responseArea}>
+          {/* Live interim text while speaking (web) */}
+          {isListening && interimText ? (
+            <View style={s.interimBubble}>
+              <View style={s.tBadge}><Feather name="user" size={12} color="#8B8BAD" /></View>
+              <Text style={s.interimText}>{interimText}</Text>
+            </View>
+          ) : null}
+
+          {/* Native: countdown progress bar */}
+          {isListening && Platform.OS !== 'web' ? (
+            <View style={s.countdownWrap}>
+              <View style={[s.countdownBar, { width: `${((MAX_RECORD_SECS - recordSecs) / MAX_RECORD_SECS) * 100}%` as any }]} />
+              <Text style={s.countdownHint}>Tap mic to stop early</Text>
+            </View>
+          ) : null}
+
           {transcript && (
             <View style={s.transcriptBubble}>
               <View style={s.tBadge}><Feather name="user" size={12} color="#8B8BAD" /></View>
@@ -378,7 +391,7 @@ export default function VoiceScreen() {
               <Text style={s.responseTextStyle}>{responseText}</Text>
             </View>
           )}
-          {!transcript && !responseText && !isActive && !showFallback && (
+          {!transcript && !responseText && !isActive && !showFallback && !interimText && (
             <View style={s.examplesArea}>
               <Text style={s.examplesTitle}>Try saying:</Text>
               {examples.slice(0, 3).map((ex, i) => (
@@ -498,6 +511,21 @@ const s = StyleSheet.create({
   },
   rBadge: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#13133A', justifyContent: 'center', alignItems: 'center' },
   responseTextStyle: { color: '#EEF2FF', fontSize: 15, lineHeight: 23, flex: 1, fontFamily: 'Inter_400Regular' },
+  interimBubble: {
+    backgroundColor: '#14142A', borderRadius: 16, borderWidth: 1, borderColor: '#2E2E60',
+    padding: 14, flexDirection: 'row', gap: 10, alignSelf: 'flex-end', maxWidth: '85%',
+  },
+  interimText: { color: '#8B8BAD', fontSize: 15, lineHeight: 22, flex: 1, fontFamily: 'Inter_400Regular', fontStyle: 'italic' },
+  countdownWrap: {
+    width: '100%', backgroundColor: '#0F0F1E',
+    borderRadius: 12, borderWidth: 1, borderColor: '#1E2040',
+    overflow: 'hidden', marginBottom: 8,
+  },
+  countdownBar: {
+    height: 4, backgroundColor: '#10B981',
+    borderRadius: 12, alignSelf: 'flex-start',
+  },
+  countdownHint: { color: '#5A5A7A', fontSize: 12, textAlign: 'center', paddingVertical: 6 },
   examplesArea: { alignItems: 'center', gap: 10 },
   examplesTitle: { color: '#5A5A7A', fontSize: 13, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 },
   exampleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
