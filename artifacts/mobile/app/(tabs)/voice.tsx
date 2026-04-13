@@ -178,7 +178,9 @@ export default function VoiceScreen() {
           return;
         }
       }
-    } catch {}
+    } catch (err) {
+      console.error('[Mini] coach/voice fetch failed:', err);
+    }
 
     setResponse(language === 'en'
       ? 'Could not understand. Please try again or type below.'

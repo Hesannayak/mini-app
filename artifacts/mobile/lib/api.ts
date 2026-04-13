@@ -2,13 +2,16 @@ import { Platform } from 'react-native';
 
 const isWeb = Platform.OS === 'web';
 
-// Web: get domain from current window URL
+// EXPO_PUBLIC_DOMAIN is set by the Expo dev script to $REPLIT_DEV_DOMAIN.
+// It is baked into the bundle at build time — reliable across all iframe contexts.
+// window.location.hostname can be wrong inside Replit's canvas proxy iframes.
+const buildTimeDomain = process.env.EXPO_PUBLIC_DOMAIN ?? null;
+
 const webDomain = isWeb && typeof window !== 'undefined'
-  ? window.location.hostname
+  ? (buildTimeDomain ?? window.location.hostname)
   : null;
 
-// Native: use EXPO_PUBLIC_DOMAIN (= $REPLIT_DEV_DOMAIN, set in the dev script)
-const nativeDomain = process.env.EXPO_PUBLIC_DOMAIN ?? null;
+const nativeDomain = buildTimeDomain;
 
 const replitDomain = isWeb ? webDomain : nativeDomain;
 
