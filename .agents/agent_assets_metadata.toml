@@ -1,0 +1,14 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "bBLT219_sj1aa-7usnHxC"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "mini app icon"
+
+[[generated]]
+id = "Xnx1mRfm593b5lnEjYZ57"
+uri = "file://artifacts/mobile/assets/images/splash.png"
+type = "image"
+title = "mini splash screen"
