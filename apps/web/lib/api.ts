@@ -5,6 +5,7 @@ const API = {
   coach: process.env.NEXT_PUBLIC_COACH_URL || 'http://localhost:3004/api/v1/coach',
   intelligence: process.env.NEXT_PUBLIC_INTEL_URL || 'http://localhost:3003/api/v1',
   notifications: process.env.NEXT_PUBLIC_NOTIF_URL || 'http://localhost:3005/api/v1/notifications',
+  rides: process.env.NEXT_PUBLIC_RIDES_URL || 'http://localhost:3007/api/v1/rides',
 };
 
 export default API;
