@@ -28,6 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.className}>
       <body className="bg-[#0A0A0A] text-[#E2E8E0] min-h-screen">
         {children}
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+          }
+        `}} />
       </body>
     </html>
   );
