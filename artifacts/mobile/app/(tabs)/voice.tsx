@@ -1,51 +1,62 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Platform, StatusBar,
+  Platform, StatusBar, TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  withSequence,
-  withDelay,
-  Easing,
+  useSharedValue, useAnimatedStyle,
+  withTiming, withRepeat, withSequence, withDelay, Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useVoiceStore } from '@/store/voiceStore';
 import { useUserStore } from '@/store/userStore';
 import { VOICE_EXAMPLES } from '@/constants/intents';
+import { API, apiFetch } from '@/lib/api';
 
-const MOCK_RESPONSES = [
-  'Aapka is hafte ka total kharch ₹8,420 hua hai. Sabse zyada khana pe ₹2,800 gaya.',
-  'Account mein ₹42,350 hain. Aaj ₹1,240 ka kharch hua.',
-  'Tata Power ka bill ₹1,420 hai, 2 din mein due hai. Abhi pay karein?',
-  'Mini Score 72 hai — last week se 3 point up. Bijli bill time pe bhari isliye!',
-];
+// Web Speech API type shim
+declare const window: Window & {
+  SpeechRecognition?: new () => SpeechRecognition;
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+};
+interface SpeechRecognition extends EventTarget {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((e: any) => void) | null;
+  onerror: ((e: any) => void) | null;
+  onend: (() => void) | null;
+}
+
+const LANG_MAP: Record<string, string> = {
+  hi: 'hi-IN',
+  ta: 'ta-IN',
+  te: 'te-IN',
+  en: 'en-IN',
+};
 
 export default function VoiceScreen() {
   const { status, transcript, responseText, setStatus, setTranscript, setResponse, reset } = useVoiceStore();
   const { language } = useUserStore();
   const insets = useSafeAreaInsets();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const examples = VOICE_EXAMPLES[language] || VOICE_EXAMPLES.hi;
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Ring animations (ripple/sonar effect)
-  const r1Scale = useSharedValue(1);
-  const r1Opacity = useSharedValue(0);
-  const r2Scale = useSharedValue(1);
-  const r2Opacity = useSharedValue(0);
-  const r3Scale = useSharedValue(1);
-  const r3Opacity = useSharedValue(0);
+  // Fallback text input (native or no mic permission)
+  const [fallbackText, setFallbackText] = useState('');
+  const [useFallback, setUseFallback] = useState(false);
 
-  // Button scale
+  // Ring animations
+  const r1Scale = useSharedValue(1); const r1Opacity = useSharedValue(0);
+  const r2Scale = useSharedValue(1); const r2Opacity = useSharedValue(0);
+  const r3Scale = useSharedValue(1); const r3Opacity = useSharedValue(0);
   const btnScale = useSharedValue(1);
-
-  // Waveform bars
   const b1 = useSharedValue(4);
   const b2 = useSharedValue(4);
   const b3 = useSharedValue(4);
@@ -53,51 +64,31 @@ export default function VoiceScreen() {
   const b5 = useSharedValue(4);
   const b6 = useSharedValue(4);
   const b7 = useSharedValue(4);
+  const bars = [b1, b2, b3, b4, b5, b6, b7];
 
   const isListening = status === 'listening';
   const isProcessing = status === 'processing';
   const isActive = isListening || isProcessing;
+  const micColor = isActive ? '#10B981' : '#6366F1';
 
   useEffect(() => {
     if (isListening) {
       btnScale.value = withTiming(1.08, { duration: 200, easing: Easing.out(Easing.back(2)) });
-
-      // Ripple rings
       const ripple = (scale: Animated.SharedValue<number>, opacity: Animated.SharedValue<number>, delay: number) => {
-        scale.value = withDelay(delay, withRepeat(
-          withSequence(
-            withTiming(1, { duration: 0 }),
-            withTiming(2.4, { duration: 1800, easing: Easing.out(Easing.quad) }),
-          ), -1
-        ));
-        opacity.value = withDelay(delay, withRepeat(
-          withSequence(
-            withTiming(0.55, { duration: 0 }),
-            withTiming(0, { duration: 1800, easing: Easing.out(Easing.quad) }),
-          ), -1
-        ));
+        scale.value = withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: 0 }), withTiming(2.4, { duration: 1800, easing: Easing.out(Easing.quad) })), -1));
+        opacity.value = withDelay(delay, withRepeat(withSequence(withTiming(0.55, { duration: 0 }), withTiming(0, { duration: 1800, easing: Easing.out(Easing.quad) })), -1));
       };
-      ripple(r1Scale, r1Opacity, 0);
-      ripple(r2Scale, r2Opacity, 600);
-      ripple(r3Scale, r3Opacity, 1200);
-
-      // Waveform
+      ripple(r1Scale, r1Opacity, 0); ripple(r2Scale, r2Opacity, 600); ripple(r3Scale, r3Opacity, 1200);
       const heights = [12, 28, 44, 52, 44, 28, 12];
-      const bars = [b1, b2, b3, b4, b5, b6, b7];
       bars.forEach((b, i) => {
-        b.value = withDelay(i * 60, withRepeat(
-          withSequence(
-            withTiming(heights[i], { duration: 300, easing: Easing.out(Easing.sin) }),
-            withTiming(heights[i] * 0.25, { duration: 300, easing: Easing.in(Easing.sin) }),
-          ), -1
-        ));
+        b.value = withDelay(i * 60, withRepeat(withSequence(withTiming(heights[i], { duration: 300, easing: Easing.out(Easing.sin) }), withTiming(heights[i] * 0.25, { duration: 300, easing: Easing.in(Easing.sin) })), -1));
       });
     } else {
       btnScale.value = withTiming(1, { duration: 250 });
       r1Scale.value = withTiming(1, { duration: 300 }); r1Opacity.value = withTiming(0, { duration: 300 });
       r2Scale.value = withTiming(1, { duration: 300 }); r2Opacity.value = withTiming(0, { duration: 300 });
       r3Scale.value = withTiming(1, { duration: 300 }); r3Opacity.value = withTiming(0, { duration: 300 });
-      [b1, b2, b3, b4, b5, b6, b7].forEach(b => { b.value = withTiming(4, { duration: 300 }); });
+      bars.forEach(b => { b.value = withTiming(4, { duration: 300 }); });
     }
   }, [isListening]);
 
@@ -114,36 +105,125 @@ export default function VoiceScreen() {
   const bar7S = useAnimatedStyle(() => ({ height: b7.value }));
   const barStyles = [bar1S, bar2S, bar3S, bar4S, bar5S, bar6S, bar7S];
 
-  const handleMicPress = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+  // Core: send transcript to voice service, then coach service
+  const processTranscript = async (text: string) => {
+    setTranscript(text);
+    setStatus('processing');
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
 
-    if (status === 'idle' || status === 'responding') {
-      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      setStatus('listening');
-      setTranscript(null);
-      setResponse(null);
-
-      timerRef.current = setTimeout(() => {
-        setStatus('processing');
-        setTranscript(examples[Math.floor(Math.random() * examples.length)]);
-
-        setTimeout(() => {
-          const response = MOCK_RESPONSES[Math.floor(Math.random() * MOCK_RESPONSES.length)];
-          setResponse(response);
+    // Step 1: Voice service — intent + entity extraction
+    try {
+      const res = await apiFetch(`${API.voice()}/text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, language }),
+      }, 4000);
+      if (res.ok) {
+        const data = await res.json();
+        // Voice service returned a complete response_text — use it
+        if (data.response_text) {
+          setResponse(data.response_text);
           setStatus('responding');
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }, 1200);
-      }, 3000);
+          return;
+        }
+      }
+    } catch {}
 
+    // Step 2: Coach service — AI response fallback
+    try {
+      const res = await apiFetch(`${API.coach()}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, language, user_id: 'demo' }),
+      }, 8000);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data?.response) {
+          setResponse(data.data.response);
+          setStatus('responding');
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          return;
+        }
+      }
+    } catch {}
+
+    setResponse('Samajh nahi aaya. Dobara bolein ya type karein.');
+    setStatus('responding');
+  };
+
+  const startWebSpeech = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      setUseFallback(true);
+      return;
+    }
+    const rec: SpeechRecognition = new SR();
+    rec.lang = LANG_MAP[language] || 'hi-IN';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    recognitionRef.current = rec;
+
+    rec.onresult = (e: any) => {
+      const text: string = e.results[0][0].transcript;
+      processTranscript(text);
+    };
+    rec.onerror = (e: any) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-available') {
+        setUseFallback(true);
+        setStatus('idle');
+      } else {
+        setResponse('Mic access nahi mila. Neeche type karein.');
+        setStatus('responding');
+      }
+    };
+    rec.onend = () => {
+      // onend fires after onresult too — only reset if we never got a transcript
+      if (useVoiceStore.getState().status === 'listening') {
+        setStatus('idle');
+      }
+    };
+    rec.start();
+    setStatus('listening');
+    setTranscript(null);
+    setResponse(null);
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const stopWebSpeech = () => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    setStatus('idle');
+    setTranscript(null);
+  };
+
+  const handleMicPress = () => {
+    if (status === 'idle' || status === 'responding') {
+      if (Platform.OS === 'web') {
+        startWebSpeech();
+      } else {
+        // Native: no speech-to-text package — use fallback text input
+        setUseFallback(true);
+        setStatus('idle');
+      }
     } else if (status === 'listening') {
-      if (Platform.OS !== 'web') Haptics.selectionAsync();
-      setStatus('idle');
-      setTranscript(null);
+      stopWebSpeech();
     }
   };
 
+  const submitFallback = () => {
+    if (!fallbackText.trim()) return;
+    processTranscript(fallbackText.trim());
+    setFallbackText('');
+    setUseFallback(false);
+  };
+
   const handleReset = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+    recognitionRef.current?.abort();
+    recognitionRef.current = null;
+    setUseFallback(false);
+    setFallbackText('');
     reset();
   };
 
@@ -157,8 +237,6 @@ export default function VoiceScreen() {
     responding: 'Jawab taiyaar',
     error: 'Dobara try karein',
   };
-
-  const micColor = isActive ? '#10B981' : '#6366F1';
 
   return (
     <View style={[s.root, { paddingTop: topPad }]}>
@@ -174,7 +252,7 @@ export default function VoiceScreen() {
       </View>
 
       <View style={s.body}>
-        {/* Response/transcript area */}
+        {/* Response / transcript area */}
         <View style={s.responseArea}>
           {transcript && (
             <View style={s.transcriptBubble}>
@@ -185,10 +263,10 @@ export default function VoiceScreen() {
           {responseText && (
             <View style={s.responseBubble}>
               <View style={s.rBadge}><Feather name="cpu" size={12} color="#6366F1" /></View>
-              <Text style={s.responseText}>{responseText}</Text>
+              <Text style={s.responseTextStyle}>{responseText}</Text>
             </View>
           )}
-          {!transcript && !responseText && !isActive && (
+          {!transcript && !responseText && !isActive && !useFallback && (
             <View style={s.examplesArea}>
               <Text style={s.examplesTitle}>Try saying:</Text>
               {examples.slice(0, 3).map((ex, i) => (
@@ -203,19 +281,16 @@ export default function VoiceScreen() {
 
         {/* Mic button + rings */}
         <View style={s.micArea}>
-          {/* Waveform */}
           <View style={s.waveform}>
             {barStyles.map((style, i) => (
               <Animated.View key={i} style={[s.waveBar, style, { backgroundColor: micColor }]} />
             ))}
           </View>
 
-          {/* Rings container */}
           <View style={s.ringContainer}>
             <Animated.View style={[s.ring, { backgroundColor: micColor }, ring3Style]} />
             <Animated.View style={[s.ring, { backgroundColor: micColor }, ring2Style]} />
             <Animated.View style={[s.ring, { backgroundColor: micColor }, ring1Style]} />
-
             <Animated.View style={btnStyle}>
               <TouchableOpacity
                 style={[s.micBtn, { backgroundColor: micColor }]}
@@ -223,15 +298,15 @@ export default function VoiceScreen() {
                 activeOpacity={0.85}
               >
                 {isProcessing
-                  ? <Feather name="loader" size={36} color="#FFFFFF" />
-                  : <Feather name={isListening ? 'mic' : 'mic'} size={36} color="#FFFFFF" />
+                  ? <Feather name="loader" size={36} color="#FFF" />
+                  : <Feather name="mic" size={36} color="#FFF" />
                 }
               </TouchableOpacity>
             </Animated.View>
           </View>
 
-          <Text style={s.statusText}>{statusLabels[status]}</Text>
-          {(status === 'responding') && (
+          <Text style={s.statusText}>{statusLabels[status] ?? 'Boliye...'}</Text>
+          {status === 'responding' && (
             <TouchableOpacity onPress={handleReset} style={s.resetBtn}>
               <Feather name="rotate-ccw" size={14} color="#8B8BAD" />
               <Text style={s.resetText}>Reset</Text>
@@ -239,11 +314,40 @@ export default function VoiceScreen() {
           )}
         </View>
 
+        {/* Fallback text input — shown when mic is blocked */}
+        {useFallback && (
+          <View style={s.fallbackWrap}>
+            <View style={s.fallbackCard}>
+              <TextInput
+                style={s.fallbackInput}
+                placeholder="Type your command..."
+                placeholderTextColor="#3A3A5A"
+                value={fallbackText}
+                onChangeText={setFallbackText}
+                onSubmitEditing={submitFallback}
+                returnKeyType="send"
+                autoFocus
+              />
+              <TouchableOpacity
+                style={[s.fallbackSend, fallbackText.trim() ? s.fallbackSendActive : null]}
+                onPress={submitFallback}
+                disabled={!fallbackText.trim()}
+              >
+                <Feather name="arrow-up" size={18} color={fallbackText.trim() ? '#080812' : '#3A3A5A'} />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={() => setUseFallback(false)} style={s.dismissBtn}>
+              <Text style={s.dismissText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Example chips */}
         <View style={[s.chipsArea, { paddingBottom: bottomPad + 24 }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipsScroll}>
             {examples.map((ex, i) => (
-              <TouchableOpacity key={i} style={s.chip} activeOpacity={0.7}>
+              <TouchableOpacity key={i} style={s.chip} activeOpacity={0.7}
+                onPress={() => processTranscript(ex)}>
                 <Feather name="mic" size={11} color="#6366F1" />
                 <Text style={s.chipText}>{ex}</Text>
               </TouchableOpacity>
@@ -275,28 +379,24 @@ const s = StyleSheet.create({
   responseArea: { flex: 1, paddingHorizontal: 24, justifyContent: 'center', gap: 12 },
 
   transcriptBubble: {
-    backgroundColor: '#14142A', borderRadius: 16,
-    borderWidth: 1, borderColor: '#1E2040',
-    padding: 16, flexDirection: 'row', gap: 10,
-    alignSelf: 'flex-end', maxWidth: '85%',
+    backgroundColor: '#14142A', borderRadius: 16, borderWidth: 1, borderColor: '#1E2040',
+    padding: 16, flexDirection: 'row', gap: 10, alignSelf: 'flex-end', maxWidth: '85%',
   },
   tBadge: {
-    width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#1E2040', justifyContent: 'center', alignItems: 'center',
+    width: 24, height: 24, borderRadius: 12, backgroundColor: '#1E2040',
+    justifyContent: 'center', alignItems: 'center',
   },
   transcriptText: { color: '#C8D0F0', fontSize: 15, lineHeight: 22, flex: 1, fontFamily: 'Inter_400Regular' },
 
   responseBubble: {
-    backgroundColor: '#0F0F1E', borderRadius: 16,
-    borderWidth: 1, borderColor: '#1E2040',
-    padding: 16, flexDirection: 'row', gap: 10,
-    alignSelf: 'flex-start', maxWidth: '90%',
+    backgroundColor: '#0F0F1E', borderRadius: 16, borderWidth: 1, borderColor: '#1E2040',
+    padding: 16, flexDirection: 'row', gap: 10, alignSelf: 'flex-start', maxWidth: '90%',
   },
   rBadge: {
-    width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#13133A', justifyContent: 'center', alignItems: 'center',
+    width: 24, height: 24, borderRadius: 12, backgroundColor: '#13133A',
+    justifyContent: 'center', alignItems: 'center',
   },
-  responseText: { color: '#EEF2FF', fontSize: 15, lineHeight: 23, flex: 1, fontFamily: 'Inter_400Regular' },
+  responseTextStyle: { color: '#EEF2FF', fontSize: 15, lineHeight: 23, flex: 1, fontFamily: 'Inter_400Regular' },
 
   examplesArea: { alignItems: 'center', gap: 10 },
   examplesTitle: { color: '#5A5A7A', fontSize: 13, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 },
@@ -305,26 +405,43 @@ const s = StyleSheet.create({
 
   micArea: { alignItems: 'center', paddingVertical: 20, gap: 16 },
 
-  waveform: {
-    flexDirection: 'row', alignItems: 'center', gap: 4, height: 56,
-    paddingHorizontal: 8,
-  },
+  waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 56, paddingHorizontal: 8 },
   waveBar: { width: 4, borderRadius: 3, minHeight: 4 },
 
   ringContainer: { width: 130, height: 130, alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', width: 130, height: 130, borderRadius: 65 },
-
   micBtn: {
     width: 130, height: 130, borderRadius: 65,
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 24,
-    elevation: 12,
+    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 24, elevation: 12,
   },
 
   statusText: { color: '#8B8BAD', fontSize: 15, fontFamily: 'Inter_400Regular' },
-
   resetBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
   resetText: { color: '#8B8BAD', fontSize: 13, fontFamily: 'Inter_400Regular' },
+
+  fallbackWrap: { paddingHorizontal: 20, paddingBottom: 8, gap: 8 },
+  fallbackCard: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#0F0F1E', borderRadius: 18,
+    borderWidth: 1, borderColor: '#1E2040',
+    paddingHorizontal: 16, paddingVertical: 10, gap: 10,
+  },
+  fallbackInput: {
+    flex: 1, color: '#EEF2FF', fontSize: 15,
+    fontFamily: 'Inter_400Regular', paddingVertical: 4,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
+  },
+  fallbackSend: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: '#1E2040', justifyContent: 'center', alignItems: 'center',
+  },
+  fallbackSendActive: {
+    backgroundColor: '#EEF2FF',
+    shadowColor: '#EEF2FF', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 8,
+  },
+  dismissBtn: { alignSelf: 'center', paddingVertical: 6 },
+  dismissText: { color: '#5A5A7A', fontSize: 13 },
 
   chipsArea: { paddingTop: 4 },
   chipsScroll: { paddingHorizontal: 20, gap: 8 },
