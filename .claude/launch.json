@@ -32,12 +32,6 @@
       "port": 3004
     },
     {
-      "name": "rides-service",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3007", "--reload", "--app-dir", "services/rides"],
-      "port": 3007
-    },
-    {
       "name": "web-app",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd apps/web && npx next dev --port 3006"],

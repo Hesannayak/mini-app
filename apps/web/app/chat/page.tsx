@@ -178,36 +178,6 @@ export default function ChatPage() {
         return;
       }
 
-      // Handle ride scanning
-      if (data.action === 'scan_rides' && data.intent === 'book_ride') {
-        setMsgs(p => [...p, { id: `a${Date.now()}`, role: 'ai', text: data.response_text || 'Ride dhundh raha hoon...' }]);
-        // Call ride service to scan
-        try {
-          const { getCurrentLocation } = await import('@/lib/location');
-          const loc = await getCurrentLocation();
-          const rideRes = await fetch(`${API.rides || 'http://localhost:3007/api/v1/rides'}/scan`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ origin_lat: loc.lat, origin_lng: loc.lng, destination_lat: loc.lat + 0.05, destination_lng: loc.lng + 0.02, destination_label: data.entities?.destination }),
-          });
-          const rides = await rideRes.json();
-          if (rides.success && rides.options?.length > 0) {
-            const best = rides.options[0];
-            const tipNote = best.tip_recommended > 0 ? ` + ₹${best.tip_recommended} tip` : '';
-            setMsgs(p => [...p, {
-              id: `ride${Date.now()}`, role: 'ai',
-              text: `Namma Yatri ${best.vehicle_type} available — ₹${best.price}${tipNote}, ${best.eta_minutes} min ETA. Book karoon?`,
-            }]);
-          } else {
-            setMsgs(p => [...p, { id: `ride${Date.now()}`, role: 'ai', text: rides.message || 'Abhi koi driver nahi hai.' }]);
-          }
-        } catch {
-          setMsgs(p => [...p, { id: `ride${Date.now()}`, role: 'ai', text: 'Ride check mein error aaya. Dobara try karo.' }]);
-        }
-        setLoading(false);
-        scroll();
-        return;
-      }
-
       setMsgs(p => [...p, { id: `a${Date.now()}`, role: 'ai', text: data.response_text || 'Error' }]);
     } catch {
       setMsgs(p => [...p, { id: `e${Date.now()}`, role: 'ai', text: 'Connection error.' }]);
